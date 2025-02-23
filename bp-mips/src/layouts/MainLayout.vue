@@ -11,48 +11,20 @@
       </q-toolbar>
     </q-header>
 
-    <q-page-container>
-      <textarea id="editorContainer" style="height: 90vh; width: 100%"></textarea>
+    <q-page-container style="min-height: inherit;">
+      <CodeMirrorEditor />
     </q-page-container>
   </q-layout>
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted } from 'vue'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const CodeMirror: any
+import { defineComponent } from 'vue'
+import CodeMirrorEditor from '../components/CodeMirrorEditor.vue'
 
 export default defineComponent({
   name: 'MainLayout',
-  setup() {
-    onMounted(() => {
-      const textarea = document.getElementById('editorContainer')
-      if (textarea) {
-        const editor = CodeMirror.fromTextArea(textarea, {
-          lineNumbers: true,
-          mode: 'python',
-          theme: 'base16-light',
-          lineNumberFormatter: (line: number) => {
-            return (line - 1).toString(16).toUpperCase().padStart(4, '0')
-          },
-          extraKeys: { 'Ctrl-Space': 'autocomplete' },
-        })
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        editor.on('inputRead', function onInputRead(cm: any, change: any) {
-          if (change.text[0] && /[a-zA-Z]/.test(change.text[0])) {
-            cm.showHint({ completeSingle: false })
-          }
-        })
-      }
-    })
-
-    return {}
+  components: {
+    CodeMirrorEditor,
   },
 })
 </script>
-
-<style scoped>
-/* Optional styling */
-</style>
