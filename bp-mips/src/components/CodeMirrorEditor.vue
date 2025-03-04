@@ -1,10 +1,11 @@
 <template>
-  <div class="codemirror" style="width: 22vw">
+  <div class="codemirror" style="width: 350px">
     <div class="buttons-container">
       <q-btn icon="play_arrow" @click="playsingle"></q-btn>
       <q-btn icon="fast_forward" @click="playwhole"></q-btn>
-      <q-btn icon="download" @click="saveToFile"></q-btn>
-      <q-btn icon="upload_file" @click="triggerFileInput"></q-btn>
+      <q-btn icon="stop" @click="stop"></q-btn>
+      <q-btn icon="save" @click="saveToFile"></q-btn>
+      <q-btn icon="upload" @click="triggerFileInput"></q-btn>
       <input type="file" @change="uploadFile" ref="fileInput" style="display: none;" />
     </div>
     <textarea id="editorContainer"></textarea>
@@ -13,6 +14,11 @@
 
 <script lang="ts">
 import { defineComponent, onMounted, ref } from 'vue'
+import eventBus from "src/eventBus"
+import { useCodeStore } from 'src/stores/codeStore'
+
+import { runMipsPipeline } from 'src/utils/mips'
+
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const CodeMirror: any
@@ -23,55 +29,64 @@ export default defineComponent({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let editor: any
     const fileInput = ref<HTMLInputElement | null>(null)
+    let currentHighlightedLine: number | null = null
+    const codeStore = useCodeStore()
 
     onMounted(() => {
       const textarea = document.getElementById('editorContainer')
       if (textarea) {
         editor = CodeMirror.fromTextArea(textarea, {
           lineNumbers: true,
-          mode: 'python',
           theme: 'base16-light',
           lineNumberFormatter: (line: number) => {
             return (line - 1).toString(16).toUpperCase().padStart(4, '0')
           },
-          extraKeys: { 'Ctrl-Space': 'autocomplete' },
         })
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        editor.on('inputRead', function onInputRead(cm: any, change: any) {
-          if (change.text[0] && /[a-zA-Z]/.test(change.text[0])) {
-            cm.showHint({ completeSingle: false })
-          }
+        editor.on('change', () => {
+          console.log('CodeMirror content changed')
+          updateCodeStore()
         })
       }
+
+      codeStore.initialize()
     })
 
+
+    const updateCodeStore = () => {
+      if (!editor) return
+
+      const content = editor.getValue()
+      const lines = content.split('\n')
+
+      codeStore.updateCode(lines)
+    }
+
     const playsingle = () => {
-      const editorContent = editor.getValue()
-      passTextToOtherProgram(editorContent)
-      highlightLine(5)
-      setTimeout(() => {
-        removeHighlight(5)
-      }, 2000)
+      const code = editor.getValue()
+      updateCodeStore()
+      eventBus.emit('playRequested', { code, mode: 'single' })
     }
 
     const playwhole = () => {
-      const editorContent = editor.getValue()
-      passTextToOtherProgram(editorContent)
-      highlightLine(5)
-      setTimeout(() => {
-        removeHighlight(5)
-      }, 2000)
+      const code = editor.getValue()
+      updateCodeStore()
+      eventBus.emit('playRequested', { code, mode: 'whole' })
+      runMipsPipeline()
     }
 
-    const passTextToOtherProgram = (text: string) => {
-      console.log('Text from CodeMirror:', text)
+    const stop = () => {
+      console.log('Stop button clicked')
     }
 
     const highlightLine = (lineNumber: number) => {
       if (editor) {
+        if (currentHighlightedLine !== null) {
+          editor.removeLineClass(currentHighlightedLine, 'background', 'highlight-line')
+        }
         console.log(`Highlighting line: ${lineNumber}`)
-        editor.addLineClass(lineNumber - 1, 'background', 'highlight-line')
+        editor.addLineClass(lineNumber, 'background', 'highlight-line')
+        currentHighlightedLine = lineNumber
       } else {
         console.error('Editor is not initialized')
       }
@@ -80,7 +95,8 @@ export default defineComponent({
     const removeHighlight = (lineNumber: number) => {
       if (editor) {
         console.log(`Removing highlight from line: ${lineNumber}`)
-        editor.removeLineClass(lineNumber - 1, 'background', 'highlight-line')
+        editor.removeLineClass(lineNumber, 'background', 'highlight-line')
+        currentHighlightedLine = null
       } else {
         console.error('Editor is not initialized')
       }
@@ -88,6 +104,7 @@ export default defineComponent({
 
     const saveToFile = () => {
       const content = editor.getValue()
+      updateCodeStore()
       const blob = new Blob([content], { type: 'text/plain' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -106,6 +123,7 @@ export default defineComponent({
           const content = e.target?.result as string
           editor.setValue(content)
           input.value = ''
+          updateCodeStore()
         }
         reader.readAsText(file)
       }
@@ -118,8 +136,10 @@ export default defineComponent({
     }
 
     return {
+      codeStore,
       playsingle,
       playwhole,
+      stop,
       highlightLine,
       removeHighlight,
       saveToFile,
@@ -144,4 +164,7 @@ export default defineComponent({
   margin-bottom: 10px;
 }
 
+.highlight-line {
+  background-color: yellow;
+}
 </style>

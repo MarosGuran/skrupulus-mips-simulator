@@ -11,8 +11,12 @@
       </q-toolbar>
     </q-header>
 
-    <q-page-container style="min-height: inherit;">
-      <CodeMirrorEditor />
+    <q-page-container class="app" style="min-height: inherit;">
+      <div class="editor-registers-container">
+        <CodeMirrorEditor />
+        <memoryComponent />
+      </div>
+      <visualizationComponent />
     </q-page-container>
   </q-layout>
 </template>
@@ -20,11 +24,28 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import CodeMirrorEditor from '../components/CodeMirrorEditor.vue'
+import memoryComponent from '../components/memoryComponent.vue'
+import visualizationComponent from 'src/components/visualizationComponent.vue'
 
 export default defineComponent({
   name: 'MainLayout',
   components: {
     CodeMirrorEditor,
+    memoryComponent,
+    visualizationComponent,
   },
 })
 </script>
+
+<style scoped>
+.editor-registers-container {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+.app {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+}
+</style>
