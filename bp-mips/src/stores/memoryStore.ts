@@ -47,5 +47,45 @@ export const useMemoryStore = defineStore('memoryStore', {
         value: reg.value
       }))
     },
+    readRegister(registerIndex: number): number {
+      if (this.registers.length === 0) {
+        this.resetRegisters()
+      }
+
+      if (registerIndex < 0 || registerIndex >= this.registers.length) {
+        console.error(`Invalid register index: ${registerIndex}`)
+        return 0
+      }
+
+      const register = this.registers[registerIndex]
+      if (!register) {
+        console.error(`Register at index ${registerIndex} is undefined`)
+        return 0
+      }
+
+      return parseInt(register.value.replace(/\s/g, ''), 16) || 0
+    },
+    writeRegister(registerIndex: number, value: number): void {
+      if (registerIndex === 0) {
+        return
+      }
+
+      if (this.registers.length === 0) {
+        this.resetRegisters()
+      }
+
+      if (registerIndex < 0 || registerIndex >= this.registers.length) {
+        console.error(`Invalid register index: ${registerIndex}`)
+        return
+      }
+
+      const register = this.registers[registerIndex]
+      if (!register) {
+        console.error(`Register at index ${registerIndex} is undefined`)
+        return
+      }
+      const hexValue = value.toString(16).padStart(8, '0').toUpperCase()
+      register.value = `${hexValue.substring(0, 4)} ${hexValue.substring(4)}`
+    }
   },
 })
