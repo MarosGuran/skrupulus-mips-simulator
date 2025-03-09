@@ -21,6 +21,8 @@ let decodeStage: MipsInstruction = new MipsInstruction()
 let executeStage: MipsInstruction = new MipsInstruction()
 let memoryStage: MipsInstruction = new MipsInstruction()
 
+let mfhi: number = 0
+
 
 let pc = 0
 
@@ -115,8 +117,111 @@ function execute() {
       mipsInst.result = rsValue - rtValue
       break
     }
-
+    case 'MUL':{
+      const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
+      const rtValue = typeof mipsInst.rt === 'string' ? parseInt(mipsInst.rt) : mipsInst.rt
+      mipsInst.result = rsValue * rtValue
+      break
     }
+    case 'MULU': {
+      const rsValue = typeof mipsInst.rs === 'string' ?
+        parseInt(mipsInst.rs) >>> 0 : mipsInst.rs >>> 0;
+      const rtValue = typeof mipsInst.rt === 'string' ?
+        parseInt(mipsInst.rt) >>> 0 : mipsInst.rt >>> 0;
+
+      mipsInst.result = (rsValue * rtValue) >>> 0;
+      break;
+    }
+    case 'DIV': {
+      const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
+      const rtValue = typeof mipsInst.rt === 'string' ? parseInt(mipsInst.rt) : mipsInst.rt
+
+      if (rtValue === 0) {
+        console.error("Division by zero attempted")
+        mipsInst.result = 0
+        mfhi = 0
+      } else {
+        mipsInst.result = Math.floor(rsValue / rtValue)
+        mfhi = rsValue % rtValue
+      }
+      break
+    }
+    case 'DIVU': {
+      const rsValue = typeof mipsInst.rs === 'string' ?
+        parseInt(mipsInst.rs) >>> 0 : mipsInst.rs >>> 0;
+      const rtValue = typeof mipsInst.rt === 'string' ?
+        parseInt(mipsInst.rt) >>> 0 : mipsInst.rt >>> 0;
+
+      if (rtValue === 0) {
+        console.error("Division by zero attempted")
+        mipsInst.result = 0
+        mfhi = 0
+      } else {
+        mipsInst.result = Math.floor(rsValue / rtValue)
+        mfhi = rsValue % rtValue
+      }
+      break
+    }
+    case 'MFHI': {
+      mipsInst.result = mfhi
+      break
+    }
+    case 'SLL': {
+      const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
+      const rtValue = typeof mipsInst.rt === 'string' ? parseInt(mipsInst.rt) : mipsInst.rt
+      mipsInst.result = rsValue << rtValue
+      break
+    }
+    case 'SRL': {
+      const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
+      const rtValue = typeof mipsInst.rt === 'string' ? parseInt(mipsInst.rt) : mipsInst.rt
+      mipsInst.result = rsValue >>> rtValue
+      break
+    }
+    case 'AND':{
+      const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
+      const rtValue = typeof mipsInst.rt === 'string' ? parseInt(mipsInst.rt) : mipsInst.rt
+      mipsInst.result = rsValue & rtValue
+      break
+    }
+    case 'ANDI': {
+      const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
+      const rtValue = hexToDecimal(mipsInst.rt as string)
+      mipsInst.result = rsValue & rtValue
+      break
+    }
+    case 'OR':{
+      const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
+      const rtValue = typeof mipsInst.rt === 'string' ? parseInt(mipsInst.rt) : mipsInst.rt
+      mipsInst.result = rsValue | rtValue
+      break
+    }
+    case 'ORI': {
+      const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
+      const rtValue = hexToDecimal(mipsInst.rt as string)
+      mipsInst.result = rsValue | rtValue
+      break
+    }
+    case 'NOR':{
+      const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
+      const rtValue = typeof mipsInst.rt === 'string' ? parseInt(mipsInst.rt) : mipsInst.rt
+      mipsInst.result = ~(rsValue | rtValue)
+      break
+    }
+    case 'XOR':{
+      const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
+      const rtValue = typeof mipsInst.rt === 'string' ? parseInt(mipsInst.rt) : mipsInst.rt
+      mipsInst.result = rsValue ^ rtValue
+      break
+    }
+    case 'XORI': {
+      const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
+      const rtValue = hexToDecimal(mipsInst.rt as string)
+      mipsInst.result = rsValue ^ rtValue
+      break
+    }
+  }
+
 
   pipelineStore.updateStage(2, mipsInst.raw)
 
