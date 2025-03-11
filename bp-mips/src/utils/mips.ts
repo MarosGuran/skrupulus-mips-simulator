@@ -220,6 +220,61 @@ function execute() {
       mipsInst.result = rsValue ^ rtValue
       break
     }
+    case 'BEQ': {
+      const memoryStore = useMemoryStore()
+      const rdValue = memoryStore.readRegister(mipsInst.rd as number)
+      const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
+      if (rsValue === rdValue) {
+        pc = hexToDecimal(mipsInst.rt as string) - 1
+      }
+      break
+    }
+    case 'BNE': {
+      const memoryStore = useMemoryStore()
+      const rdValue = memoryStore.readRegister(mipsInst.rd as number)
+      const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
+      if (rsValue !== rdValue) {
+        pc = hexToDecimal(mipsInst.rt as string) - 1
+      }
+      break
+    }
+    case 'LW': {
+      const memoryStore = useMemoryStore()
+      if (typeof mipsInst.rs === 'string' && mipsInst.rs.includes('(')) {
+        const parts = mipsInst.rs.split('(')
+        const offset = hexToDecimal(parts[0] || '0')
+        const regStr = parts[1]?.replace(')', '').replace('$', '') || '0'
+        const regNum = parseInt(regStr)
+
+        const baseAddress = memoryStore.readRegister(regNum)
+        mipsInst.rt = baseAddress + offset
+      }
+      break
+    }
+    case 'SW': {
+      const memoryStore = useMemoryStore()
+      if (typeof mipsInst.rs === 'string' && mipsInst.rs.includes('(')) {
+        const parts = mipsInst.rs.split('(')
+        const offset = hexToDecimal(parts[0] || '0')
+        const regStr = parts[1]?.replace(')', '').replace('$', '') || '0'
+        const regNum = parseInt(regStr)
+
+        const baseAddress = memoryStore.readRegister(regNum)
+        mipsInst.result = memoryStore.readRegister(mipsInst.rd as number)
+        mipsInst.rt = baseAddress + offset
+      }
+      break
+    }
+    case 'LI': {
+      const immediateValue = typeof mipsInst.rs === 'string' ? hexToDecimal(mipsInst.rs) : mipsInst.rs
+      mipsInst.result = immediateValue
+      break
+    }
+    case 'LUI': {
+      const immediateValue = typeof mipsInst.rs === 'string' ? hexToDecimal(mipsInst.rs) : mipsInst.rs
+      mipsInst.result = (immediateValue & 0xFFFF) << 16
+      break
+    }
   }
 
 

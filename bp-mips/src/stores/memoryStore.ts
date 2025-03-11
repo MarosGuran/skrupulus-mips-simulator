@@ -86,6 +86,35 @@ export const useMemoryStore = defineStore('memoryStore', {
       }
       const hexValue = value.toString(16).padStart(8, '0').toUpperCase()
       register.value = `${hexValue.substring(0, 4)} ${hexValue.substring(4)}`
+    },
+    readMemory(address: number): number {
+      if (this.memoryArray.length === 0) {
+        this.initialize()
+      }
+      const hexAddress = address.toString(16).padStart(4, '0').toUpperCase()
+
+      const cell = this.memoryArray.find(cell => cell.address === hexAddress)
+
+      if (!cell) {
+        console.error(`Memory address not found: 0x${hexAddress}`)
+        return 0
+      }
+      return parseInt(cell.value.replace(/\s/g, ''), 16) || 0
+    },
+
+    writeMemory(address: number, value: number): void {
+      if (this.memoryArray.length === 0) {
+        this.initialize()
+      }
+      const hexAddress = address.toString(16).padStart(4, '0').toUpperCase()
+      const cell = this.memoryArray.find(cell => cell.address === hexAddress)
+
+      if (!cell) {
+        console.error(`Memory address not found: 0x${hexAddress}`)
+        return
+      }
+      const hexValue = value.toString(16).padStart(8, '0').toUpperCase()
+      cell.value = `${hexValue.substring(0, 4)} ${hexValue.substring(4)}`
     }
   },
 })
