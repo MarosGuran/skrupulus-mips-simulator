@@ -63,12 +63,24 @@ export function runMipsPipeline() {
 
 function writeBack() {
   const pipelineStore = usePipelineStore()
+  const memoryStore = useMemoryStore()
 
   const mipsInst = memoryStage
 
+  const writeBackInstructions = [
+    'ADD', 'ADDI', 'SUB', 'SUBI', 'MUL', 'MULU', 'DIV', 'DIVU',
+    'AND', 'ANDI', 'OR', 'ORI', 'XOR', 'XORI', 'NOR',
+    'SLL', 'SRL',
+    'MFHI',
+  ];
+
+  if (writeBackInstructions.includes(mipsInst.name)) {
+    memoryStore.writeRegister(mipsInst.rd as number, mipsInst.result as number);
+  }
+
   pipelineStore.updateStage(4, mipsInst.raw)
 
-  // console.log('Write Back:', mipsInst)
+  console.log('Write Back:', mipsInst)
 }
 
 function memory() {
@@ -103,8 +115,6 @@ function memory() {
   pipelineStore.updateStage(3, mipsInst.raw)
 
   memoryStage = mipsInst
-
-  console.log('Memory:', mipsInst)
 }
 
 function execute() {
@@ -305,8 +315,6 @@ function execute() {
   pipelineStore.updateStage(2, mipsInst.raw)
 
   executeStage = mipsInst
-
-  // console.log('Execute:', mipsInst)
 }
 
 function decode() {
@@ -376,7 +384,6 @@ function decode() {
 
   pipelineStore.updateStage(1, mipsInst.raw)
   decodeStage = mipsInst
-  // console.log('Decode:', decodeStage)
 }
 
 function fetch(instructionObj: { address: string; instruction: string }) {
@@ -401,6 +408,4 @@ function fetch(instructionObj: { address: string; instruction: string }) {
   pipelineStore.updateStage(0, mipsInst.raw)
 
   fetchStage = mipsInst
-
-  // console.log('Fetch:', fetchStage)
 }

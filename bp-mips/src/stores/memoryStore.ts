@@ -84,7 +84,7 @@ export const useMemoryStore = defineStore('memoryStore', {
         console.error(`Register at index ${registerIndex} is undefined`)
         return
       }
-      const hexValue = value.toString(16).padStart(8, '0').toUpperCase()
+      const hexValue = (value >>> 0).toString(16).padStart(8, '0').toUpperCase()
       register.value = `${hexValue.substring(0, 4)} ${hexValue.substring(4)}`
     },
     readMemory(address: number): number {
