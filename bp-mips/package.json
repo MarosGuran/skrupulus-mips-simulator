@@ -24,6 +24,7 @@
     "axios": "^1.2.1",
     "pinia": "^2.3.1",
     "quasar": "^2.16.0",
+    "register-service-worker": "^1.7.2",
     "vue": "^3.4.18",
     "vue-router": "^4.0.12",
     "vue3-ace-editor": "^2.2.4"
@@ -42,7 +43,14 @@
     "prettier": "^3.3.3",
     "typescript": "~5.5.3",
     "vite-plugin-checker": "^0.8.0",
-    "vue-tsc": "^2.0.29"
+    "vue-tsc": "^2.0.29",
+    "workbox-build": "^7.3.0",
+    "workbox-cacheable-response": "^7.3.0",
+    "workbox-core": "^7.3.0",
+    "workbox-expiration": "^7.3.0",
+    "workbox-precaching": "^7.3.0",
+    "workbox-routing": "^7.3.0",
+    "workbox-strategies": "^7.3.0"
   },
   "engines": {
     "node": "^28 || ^26 || ^24 || ^22 || ^20 || ^18",

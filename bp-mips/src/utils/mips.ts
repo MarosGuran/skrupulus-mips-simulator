@@ -26,10 +26,11 @@ let mfhi: number = 0
 
 let pc = 0
 
-export function runMipsPipeline() {
+export async function runMipsPipeline() {
   const codeStore = useCodeStore()
   const pipelineStore = usePipelineStore()
   pipelineStore.resetStages()
+  pipelineStore.startExecution()
 
   fetchStage = new MipsInstruction()
   decodeStage = new MipsInstruction()
@@ -39,8 +40,13 @@ export function runMipsPipeline() {
 
   pc = 0
 
-  while (true) {
+  function delay(t: number) {
+    return new Promise( resolve => setTimeout(resolve, t) );
+  }
+
+  while (pipelineStore.isRunning) {
     if(pc >= codeStore.codeArray.length || pc > 2000000) {
+      pipelineStore.stopExecution()
       break
     }
     const instruction = codeStore.codeArray[pc]
@@ -58,6 +64,7 @@ export function runMipsPipeline() {
     }
     pc++
     // console.log('Pipeline:', pipelineStore.stages)
+    await delay(pipelineStore.executionSpeed);
   }
 }
 
@@ -80,7 +87,7 @@ function writeBack() {
 
   pipelineStore.updateStage(4, mipsInst.raw)
 
-  console.log('Write Back:', mipsInst)
+  // console.log('Write Back:', mipsInst)
 }
 
 function memory() {

@@ -8,6 +8,7 @@
           </q-avatar>
           SKRUPULUS MIPS simulator
         </q-toolbar-title>
+        <speedBar />
       </q-toolbar>
     </q-header>
 
@@ -26,6 +27,7 @@ import { defineComponent } from 'vue'
 import CodeMirrorEditor from '../components/CodeMirrorEditor.vue'
 import memoryComponent from '../components/memoryComponent.vue'
 import visualizationComponent from 'src/components/visualizationComponent.vue'
+import speedBar from 'src/components/speedBar.vue'
 
 export default defineComponent({
   name: 'MainLayout',
@@ -33,6 +35,7 @@ export default defineComponent({
     CodeMirrorEditor,
     memoryComponent,
     visualizationComponent,
+    speedBar,
   },
 })
 </script>

@@ -14,8 +14,8 @@
 
 <script lang="ts">
 import { defineComponent, onMounted, ref } from 'vue'
-import eventBus from "src/eventBus"
 import { useCodeStore } from 'src/stores/codeStore'
+import { usePipelineStore } from 'src/stores/pipelineStore'
 
 import { runMipsPipeline } from 'src/utils/mips'
 
@@ -31,6 +31,7 @@ export default defineComponent({
     const fileInput = ref<HTMLInputElement | null>(null)
     let currentHighlightedLine: number | null = null
     const codeStore = useCodeStore()
+    const pipelineStore = usePipelineStore()
 
     onMounted(() => {
       const textarea = document.getElementById('editorContainer')
@@ -44,7 +45,6 @@ export default defineComponent({
         })
 
         editor.on('change', () => {
-          console.log('CodeMirror content changed')
           updateCodeStore()
         })
       }
@@ -63,20 +63,18 @@ export default defineComponent({
     }
 
     const playsingle = () => {
-      const code = editor.getValue()
       updateCodeStore()
-      eventBus.emit('playRequested', { code, mode: 'single' })
     }
 
     const playwhole = () => {
-      const code = editor.getValue()
       updateCodeStore()
-      eventBus.emit('playRequested', { code, mode: 'whole' })
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       runMipsPipeline()
     }
 
     const stop = () => {
       console.log('Stop button clicked')
+      pipelineStore.stopExecution()
     }
 
     const highlightLine = (lineNumber: number) => {
@@ -156,6 +154,7 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   padding: 1rem;
+  padding-bottom: 0rem;
 }
 
 .buttons-container {

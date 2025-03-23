@@ -17,7 +17,7 @@ export const useCodeStore = defineStore('codeStore', {
     updateCode(codeLines: string[]) {
       this.codeArray = codeLines.map((line, index) => ({
         address: `${(index).toString(16).padStart(4, '0').toUpperCase()}`,
-        instruction: line.trim(),
+        instruction: line.trim().toUpperCase(),
       }))
     },
 

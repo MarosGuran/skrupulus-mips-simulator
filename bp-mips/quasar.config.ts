@@ -65,7 +65,7 @@ export default defineConfig((/* ctx */) => {
 
       // extendViteConf (viteConf) {},
       // viteVuePluginOptions: {},
-      
+
       vitePlugins: [
         ['vite-plugin-checker', {
           vueTsc: true,
@@ -135,7 +135,7 @@ export default defineConfig((/* ctx */) => {
       // manualStoreHydration: true,
       // manualPostHydrationTrigger: true,
 
-      pwa: false
+      pwa: true
       // pwaOfflineHtmlFilename: 'offline.html', // do NOT use index.html as name!
 
       // pwaExtendGenerateSWOptions (cfg) {},
@@ -144,16 +144,57 @@ export default defineConfig((/* ctx */) => {
 
     // https://v2.quasar.dev/quasar-cli-vite/developing-pwa/configuring-pwa
     pwa: {
-      workboxMode: 'GenerateSW' // 'GenerateSW' or 'InjectManifest'
-      // swFilename: 'sw.js',
-      // manifestFilename: 'manifest.json',
-      // extendManifestJson (json) {},
-      // useCredentialsForManifestTag: true,
-      // injectPwaMetaTags: false,
-      // extendPWACustomSWConf (esbuildConf) {},
-      // extendGenerateSWOptions (cfg) {},
-      // extendInjectManifestOptions (cfg) {}
-    },
+      workboxPluginMode: 'GenerateSW', // or 'InjectManifest'
+      workboxOptions: {
+        skipWaiting: true,
+        clientsClaim: true,
+        runtimeCaching: [
+          {
+            urlPattern: /codemirror\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'codemirror-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
+              }
+            }
+          }
+        ]
+      },
+      manifest: {
+        name: 'MIPS Simulator',
+        short_name: 'MIPS',
+        description: 'MIPS Pipeline Simulator',
+        display: 'standalone',
+        orientation: 'portrait',
+        background_color: '#ffffff',
+        theme_color: '#027be3',
+        icons: [
+          {
+            src: 'icons/favicon-128x128.png',
+            sizes: '128x128',
+            type: 'image/png'
+          },
+          {
+            src: 'icons/favicon-96x96.png',
+            sizes: '96x96',
+            type: 'image/png'
+          },
+          {
+            src: 'icons/favicon-32x32.png',
+            sizes: '32x32',
+            type: 'image/png'
+          },
+          {
+            src: 'icons/favicon-16x16.png',
+            sizes: '16x16',
+            type: 'image/png'
+          }
+        ]
+      }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any,
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/developing-cordova-apps/configuring-cordova
     cordova: {

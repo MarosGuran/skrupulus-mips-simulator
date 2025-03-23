@@ -112,6 +112,7 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   padding: 1rem;
+  padding-bottom: 0rem;
 }
 .buttons-container {
   display: flex;
