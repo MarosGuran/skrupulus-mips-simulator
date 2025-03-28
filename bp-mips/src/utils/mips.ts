@@ -20,17 +20,16 @@ let fetchStage: MipsInstruction = new MipsInstruction()
 let decodeStage: MipsInstruction = new MipsInstruction()
 let executeStage: MipsInstruction = new MipsInstruction()
 let memoryStage: MipsInstruction = new MipsInstruction()
+export let currentInstructionLine = -1;
 
 let mfhi: number = 0
 
 
 let pc = 0
 
-export async function runMipsPipeline() {
-  const codeStore = useCodeStore()
+export function resetMipsPipeline() {
   const pipelineStore = usePipelineStore()
   pipelineStore.resetStages()
-  pipelineStore.startExecution()
 
   fetchStage = new MipsInstruction()
   decodeStage = new MipsInstruction()
@@ -39,6 +38,49 @@ export async function runMipsPipeline() {
 
 
   pc = 0
+}
+
+export function resetMipsProgramCounter() {
+  pc = 0
+}
+
+export function debugMipsPipeline() {
+  const codeStore = useCodeStore()
+  const pipelineStore = usePipelineStore()
+
+
+  if(pc >= codeStore.codeArray.length || pc > 2000000) {
+    pipelineStore.stopExecution()
+  } else {
+  const instruction = codeStore.codeArray[pc]
+
+  writeBack()
+
+  memory()
+
+  execute()
+
+  decode()
+
+  if (instruction) {
+    fetch(instruction)
+    pc++
+    return currentInstructionLine;
+  } else {
+    pc++
+  }
+  // console.log('Pipeline:', pipelineStore.stages)
+  }
+  return -1;
+}
+
+
+export async function runMipsPipeline() {
+  const codeStore = useCodeStore()
+  const pipelineStore = usePipelineStore()
+  resetMipsPipeline()
+  pipelineStore.startExecution()
+
 
   function delay(t: number) {
     return new Promise( resolve => setTimeout(resolve, t) );
@@ -69,7 +111,7 @@ export async function runMipsPipeline() {
 }
 
 function writeBack() {
-  const pipelineStore = usePipelineStore()
+  // const pipelineStore = usePipelineStore()
   const memoryStore = useMemoryStore()
 
   const mipsInst = memoryStage
@@ -85,13 +127,13 @@ function writeBack() {
     memoryStore.writeRegister(mipsInst.rd as number, mipsInst.result as number);
   }
 
-  pipelineStore.updateStage(4, mipsInst.raw)
+  // pipelineStore.updateStage(4, mipsInst.raw)
 
   // console.log('Write Back:', mipsInst)
 }
 
 function memory() {
-  const pipelineStore = usePipelineStore()
+  // const pipelineStore = usePipelineStore()
 
   const mipsInst = executeStage
 
@@ -119,13 +161,13 @@ function memory() {
     }
   }
 
-  pipelineStore.updateStage(3, mipsInst.raw)
+  // pipelineStore.updateStage(3, mipsInst.raw)
 
   memoryStage = mipsInst
 }
 
 function execute() {
-  const pipelineStore = usePipelineStore()
+  // const pipelineStore = usePipelineStore()
 
   const mipsInst = decodeStage
 
@@ -319,19 +361,19 @@ function execute() {
   }
 
 
-  pipelineStore.updateStage(2, mipsInst.raw)
+  // pipelineStore.updateStage(2, mipsInst.raw)
 
   executeStage = mipsInst
 }
 
 function decode() {
-  const pipelineStore = usePipelineStore()
+  // const pipelineStore = usePipelineStore()
   const memoryStore = useMemoryStore()
 
   const mipsInst = fetchStage
 
   if (mipsInst.raw === 'NOP') {
-    pipelineStore.updateStage(1, mipsInst.raw)
+    // pipelineStore.updateStage(1, mipsInst.raw)
     decodeStage = mipsInst
     return
   }
@@ -389,7 +431,7 @@ function decode() {
     }
   }
 
-  pipelineStore.updateStage(1, mipsInst.raw)
+  // pipelineStore.updateStage(1, mipsInst.raw)
   decodeStage = mipsInst
 }
 
@@ -412,7 +454,10 @@ function fetch(instructionObj: { address: string; instruction: string }) {
     opcode,
   )
 
-  pipelineStore.updateStage(0, mipsInst.raw)
+  // pipelineStore.updateStage(0, mipsInst.raw)
+  pipelineStore.pushInstruction(mipsInst.raw)
+
+  currentInstructionLine = parseInt(address, 16) || 0;
 
   fetchStage = mipsInst
 }

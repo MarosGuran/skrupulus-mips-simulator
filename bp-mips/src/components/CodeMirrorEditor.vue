@@ -1,8 +1,8 @@
 <template>
   <div class="codemirror" style="width: 350px">
     <div class="buttons-container">
-      <q-btn icon="play_arrow" @click="playsingle"></q-btn>
-      <q-btn icon="fast_forward" @click="playwhole"></q-btn>
+      <q-btn icon="play_arrow" @click="playsingle" :disable="pipelineStore.isRunning"></q-btn>
+      <q-btn icon="fast_forward" @click="playwhole" :disable="pipelineStore.isRunning"></q-btn>
       <q-btn icon="stop" @click="stop"></q-btn>
       <q-btn icon="save" @click="saveToFile"></q-btn>
       <q-btn icon="upload" @click="triggerFileInput"></q-btn>
@@ -17,7 +17,7 @@ import { defineComponent, onMounted, ref } from 'vue'
 import { useCodeStore } from 'src/stores/codeStore'
 import { usePipelineStore } from 'src/stores/pipelineStore'
 
-import { runMipsPipeline } from 'src/utils/mips'
+import { debugMipsPipeline, runMipsPipeline } from 'src/utils/mips'
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,10 +64,18 @@ export default defineComponent({
 
     const playsingle = () => {
       updateCodeStore()
+      const lineNumber = debugMipsPipeline()
+
+      if (lineNumber >= 0) {
+        highlightLine(lineNumber)
+      }
     }
 
     const playwhole = () => {
       updateCodeStore()
+      if (currentHighlightedLine !== null) {
+        removeHighlight(currentHighlightedLine)
+      }
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       runMipsPipeline()
     }
@@ -75,6 +83,9 @@ export default defineComponent({
     const stop = () => {
       console.log('Stop button clicked')
       pipelineStore.stopExecution()
+      if (currentHighlightedLine !== null) {
+        removeHighlight(currentHighlightedLine)
+      }
     }
 
     const highlightLine = (lineNumber: number) => {
@@ -144,6 +155,7 @@ export default defineComponent({
       uploadFile,
       triggerFileInput,
       fileInput,
+      pipelineStore,
     }
   },
 })
@@ -163,7 +175,4 @@ export default defineComponent({
   margin-bottom: 10px;
 }
 
-.highlight-line {
-  background-color: yellow;
-}
 </style>
