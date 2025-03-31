@@ -43,5 +43,7 @@ export default defineComponent({
   display: flex;
   justify-content: center;
   width: 30%;
+  padding: 0px;
+  padding-left: 12px;
 }
 </style>

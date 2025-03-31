@@ -24,15 +24,22 @@
         </tbody>
       </table>
     </div>
+    <div class="architecture">
+      <architectureComponent class="architecture" />
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, onMounted, ref } from 'vue'
 import { usePipelineStore } from 'src/stores/pipelineStore'
+import architectureComponent from './architectureComponent.vue'
 
 export default defineComponent({
   name: 'visualizationComponent',
+  components: {
+    architectureComponent,
+  },
   setup() {
     const store = usePipelineStore()
     const pipelineHeaders = ref(['FETCH', 'DECODE', 'EXECUTE', 'MEMORY', 'WRITEBACK'])
@@ -44,6 +51,7 @@ export default defineComponent({
     return {
       store,
       pipelineHeaders,
+      architectureComponent,
     }
   },
 })
@@ -90,5 +98,13 @@ th {
   background-color: #f2f2f2;
   position: sticky;
   top: 0;
+}
+.architecture {
+  width: 98%;
+  height: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 2rem;
 }
 </style>
