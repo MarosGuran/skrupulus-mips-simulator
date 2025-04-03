@@ -4,32 +4,49 @@
  * quasar.config file > pwa > workboxMode is set to "InjectManifest"
  */
 
-declare const self: ServiceWorkerGlobalScope &
-  typeof globalThis & { skipWaiting: () => void };
+// src-pwa/custom-service-worker.ts
+/// <reference lib="webworker" />
 
-import { clientsClaim } from 'workbox-core';
-import {
-  precacheAndRoute,
-  cleanupOutdatedCaches,
-  createHandlerBoundToURL,
-} from 'workbox-precaching';
-import { registerRoute, NavigationRoute } from 'workbox-routing';
+declare const self: ServiceWorkerGlobalScope;
 
-void self.skipWaiting();
-clientsClaim();
+// Simple version for basic functionality
+console.log('Service Worker: Loading basic version');
 
-// Use with precache injection
-precacheAndRoute(self.__WB_MANIFEST);
+// Skip the waiting phase and activate immediately
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+self.addEventListener('install', (event) => {
+  console.log('Service Worker: Installed');
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  self.skipWaiting();
+});
 
-cleanupOutdatedCaches();
+// Claim clients when activated
+self.addEventListener('activate', (event) => {
+  console.log('Service Worker: Activated');
+  event.waitUntil(self.clients.claim());
+});
 
-// Non-SSR fallbacks to index.html
-// Production SSR fallbacks to offline.html (except for dev)
-if (process.env.MODE !== 'ssr' || process.env.PROD) {
-  registerRoute(
-    new NavigationRoute(
-      createHandlerBoundToURL(process.env.PWA_FALLBACK_HTML),
-      { denylist: [new RegExp(process.env.PWA_SERVICE_WORKER_REGEX), /workbox-(.)*\.js$/] }
-    )
+// Network-only strategy - no caching
+self.addEventListener('fetch', (event) => {
+  // Only handle GET requests
+  if (event.request.method !== 'GET') return;
+
+  // For all requests, use network only
+  event.respondWith(
+    fetch(event.request)
+      .catch(error => {
+        console.error('Fetch error:', error);
+        return new Response('Network error', { status: 503 });
+      })
   );
-}
+});
+
+// Listen for message to skip waiting
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    self.skipWaiting();
+  }
+});
+
+console.log('Service Worker: Basic initialization complete');

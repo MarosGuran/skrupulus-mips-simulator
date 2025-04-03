@@ -20,8 +20,9 @@ import { usePipelineStore } from 'src/stores/pipelineStore'
 import { debugMipsPipeline, runMipsPipeline } from 'src/utils/mips'
 
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const CodeMirror: any
+import CodeMirror from 'codemirror'
+import 'codemirror/lib/codemirror.css'
+import 'codemirror/theme/base16-light.css'
 
 export default defineComponent({
   name: 'CodeMirrorEditor',
@@ -34,7 +35,7 @@ export default defineComponent({
     const pipelineStore = usePipelineStore()
 
     onMounted(() => {
-      const textarea = document.getElementById('editorContainer')
+      const textarea = document.getElementById('editorContainer') as HTMLTextAreaElement
       if (textarea) {
         editor = CodeMirror.fromTextArea(textarea, {
           lineNumbers: true,
@@ -160,6 +161,13 @@ export default defineComponent({
   },
 })
 </script>
+
+
+<style>
+.CodeMirror {
+  height: 80vh !important;
+}
+</style>
 
 <style scoped>
 .codemirror {

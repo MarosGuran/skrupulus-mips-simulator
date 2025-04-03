@@ -144,7 +144,7 @@ export default defineConfig((/* ctx */) => {
 
     // https://v2.quasar.dev/quasar-cli-vite/developing-pwa/configuring-pwa
     pwa: {
-      workboxPluginMode: 'GenerateSW', // or 'InjectManifest'
+      workboxPluginMode: 'InjectManifest',
       workboxOptions: {
         skipWaiting: true,
         clientsClaim: true,
@@ -160,8 +160,11 @@ export default defineConfig((/* ctx */) => {
               }
             }
           }
-        ]
+        ],
+        swDest: 'service-worker.js',
+        swSrc: 'src-pwa/custom-service-worker.ts'
       },
+      serviceWorkerFilename: 'service-worker.js',
       manifest: {
         name: 'MIPS Simulator',
         short_name: 'MIPS',
