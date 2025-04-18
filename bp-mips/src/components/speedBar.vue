@@ -1,9 +1,9 @@
 <template>
   <q-badge color="secondary">
-    Speed per instruction: {{ speed }} (0 to 1000 ms)
+    Speed per instruction: {{ speed }} (1 to 1000 ms)
   </q-badge>
   <div class="q-pa-md slider">
-    <q-slider v-model="speed" :min="0" :max="1000" color="white" @update:model-value="updateExecutionSpeed"/>
+    <q-slider v-model="speed" :min="1" :max="1000" color="white" @update:model-value="updateExecutionSpeed"/>
   </div>
 </template>
 

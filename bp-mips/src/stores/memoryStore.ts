@@ -40,12 +40,14 @@ export const useMemoryStore = defineStore('memoryStore', {
         name: reg.name,
         value: reg.value
       }))
+      this.registers[0]!.value = '0000 0000'
     },
     saveCurrentStateAsLastUploaded() {
       this.lastUploadedState = this.registers.map(reg => ({
         name: reg.name,
         value: reg.value
       }))
+      this.registers[0]!.value = '0000 0000'
     },
     readRegister(registerIndex: number): number {
       if (this.registers.length === 0) {

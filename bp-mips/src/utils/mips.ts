@@ -121,6 +121,7 @@ function writeBack() {
     'AND', 'ANDI', 'OR', 'ORI', 'XOR', 'XORI', 'NOR',
     'SLL', 'SRL',
     'MFHI',
+    'LW','LI','LUI',
   ];
 
   if (writeBackInstructions.includes(mipsInst.name)) {
@@ -141,22 +142,12 @@ function memory() {
     case 'LW': {
       const memoryStore = useMemoryStore()
       const value = memoryStore.readMemory(mipsInst.rt as number)
-      memoryStore.writeRegister(mipsInst.rd as number, value)
+      mipsInst.result = value
       break
     }
     case 'SW': {
       const memoryStore = useMemoryStore()
       memoryStore.writeMemory(mipsInst.rt as number, mipsInst.result as number)
-      break
-    }
-    case 'LI': {
-      const memoryStore = useMemoryStore()
-      memoryStore.writeRegister(mipsInst.rd as number, mipsInst.result as number)
-      break
-    }
-    case 'LUI': {
-      const memoryStore = useMemoryStore()
-      memoryStore.writeRegister(mipsInst.rd as number, mipsInst.result as number)
       break
     }
   }

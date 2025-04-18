@@ -9,7 +9,7 @@ export const usePipelineStore = defineStore('pipelineStore', {
     stageColors: ['gray', 'gray', 'gray', 'gray', 'gray'] as string[],
     colorIndex: 0,
     isRunning: false,
-    executionSpeed: 0,
+    executionSpeed: 1,
     pc: 0,
   }),
 

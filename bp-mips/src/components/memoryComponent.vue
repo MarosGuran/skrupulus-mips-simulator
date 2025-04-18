@@ -13,7 +13,12 @@
           <tr v-for="register in store.registers" :key="register.name">
             <td>{{ register.name }}</td>
             <td>
-              <input type="text" v-model="register.value" />
+              <template v-if="register.name === '$0'">
+                <input type="text" :value="register.value" disabled class="zero-register" />
+              </template>
+              <template v-else>
+                <input type="text" v-model="register.value" />
+              </template>
             </td>
           </tr>
         </tbody>
@@ -144,4 +149,5 @@ input {
   width: 100%;
   box-sizing: border-box;
 }
+
 </style>
