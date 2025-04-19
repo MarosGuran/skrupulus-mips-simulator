@@ -69,7 +69,6 @@ export function debugMipsPipeline() {
   } else {
     pc++
   }
-  // console.log('Pipeline:', pipelineStore.stages)
   }
   return -1;
 }
@@ -105,13 +104,12 @@ export async function runMipsPipeline() {
       fetch(instruction)
     }
     pc++
-    // console.log('Pipeline:', pipelineStore.stages)
+
     await delay(pipelineStore.executionSpeed);
   }
 }
 
 function writeBack() {
-  // const pipelineStore = usePipelineStore()
   const memoryStore = useMemoryStore()
 
   const mipsInst = memoryStage
@@ -128,14 +126,10 @@ function writeBack() {
     memoryStore.writeRegister(mipsInst.rd as number, mipsInst.result as number);
   }
 
-  // pipelineStore.updateStage(4, mipsInst.raw)
-
   // console.log('Write Back:', mipsInst)
 }
 
 function memory() {
-  // const pipelineStore = usePipelineStore()
-
   const mipsInst = executeStage
 
   switch (mipsInst.name) {
@@ -152,14 +146,11 @@ function memory() {
     }
   }
 
-  // pipelineStore.updateStage(3, mipsInst.raw)
 
   memoryStage = mipsInst
 }
 
 function execute() {
-  // const pipelineStore = usePipelineStore()
-
   const mipsInst = decodeStage
 
   const hexToDecimal = (hex: string): number => {
@@ -352,19 +343,16 @@ function execute() {
   }
 
 
-  // pipelineStore.updateStage(2, mipsInst.raw)
 
   executeStage = mipsInst
 }
 
 function decode() {
-  // const pipelineStore = usePipelineStore()
   const memoryStore = useMemoryStore()
 
   const mipsInst = fetchStage
 
   if (mipsInst.raw === 'NOP') {
-    // pipelineStore.updateStage(1, mipsInst.raw)
     decodeStage = mipsInst
     return
   }
@@ -422,7 +410,6 @@ function decode() {
     }
   }
 
-  // pipelineStore.updateStage(1, mipsInst.raw)
   decodeStage = mipsInst
 }
 
@@ -445,7 +432,6 @@ function fetch(instructionObj: { address: string; instruction: string }) {
     opcode,
   )
 
-  // pipelineStore.updateStage(0, mipsInst.raw)
   pipelineStore.pushInstruction(mipsInst.raw)
 
   currentInstructionLine = parseInt(address, 16) || 0;
