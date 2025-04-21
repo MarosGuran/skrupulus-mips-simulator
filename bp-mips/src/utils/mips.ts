@@ -36,7 +36,8 @@ export function resetMipsPipeline() {
   executeStage = new MipsInstruction()
   memoryStage = new MipsInstruction()
 
-
+  mfhi = 0
+  currentInstructionLine = -1
   pc = 0
 }
 
@@ -134,12 +135,14 @@ function memory() {
 
   switch (mipsInst.name) {
     case 'LW': {
+      console.log('LW', mipsInst)
       const memoryStore = useMemoryStore()
       const value = memoryStore.readMemory(mipsInst.rt as number)
       mipsInst.result = value
       break
     }
     case 'SW': {
+      console.log('SW', mipsInst)
       const memoryStore = useMemoryStore()
       memoryStore.writeMemory(mipsInst.rt as number, mipsInst.result as number)
       break
@@ -161,31 +164,33 @@ function execute() {
     case 'ADD':{
       const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
       const rtValue = typeof mipsInst.rt === 'string' ? parseInt(mipsInst.rt) : mipsInst.rt
-      mipsInst.result = rsValue + rtValue
+      console.log(`ADD: rsValue=${rsValue.toString(16)}, rtValue=${rtValue.toString(16)}`);
+      mipsInst.result = (rsValue + rtValue) | 0
+      console.log(`ADD result: ${mipsInst.result.toString(16)}`);
       break
     }
     case 'ADDI':{
       const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
       const rtValue = hexToDecimal(mipsInst.rt as string)
-      mipsInst.result = rsValue + rtValue
+      mipsInst.result = (rsValue + signExtend16To32(rtValue)) | 0
       break
     }
     case 'SUB':{
       const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
       const rtValue = typeof mipsInst.rt === 'string' ? parseInt(mipsInst.rt) : mipsInst.rt
-      mipsInst.result = rsValue - rtValue
+      mipsInst.result = (rsValue - rtValue) | 0
       break
     }
     case 'SUBI':{
       const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
       const rtValue = hexToDecimal(mipsInst.rt as string)
-      mipsInst.result = rsValue - rtValue
+      mipsInst.result = (rsValue - signExtend16To32(rtValue)) | 0
       break
     }
     case 'MUL':{
       const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
       const rtValue = typeof mipsInst.rt === 'string' ? parseInt(mipsInst.rt) : mipsInst.rt
-      mipsInst.result = rsValue * rtValue
+      mipsInst.result = (rsValue * rtValue) | 0
       break
     }
     case 'MULU': {
@@ -194,7 +199,7 @@ function execute() {
       const rtValue = typeof mipsInst.rt === 'string' ?
         parseInt(mipsInst.rt) >>> 0 : mipsInst.rt >>> 0;
 
-      mipsInst.result = (rsValue * rtValue) >>> 0;
+      mipsInst.result = ((rsValue * rtValue) | 0) >>> 0;
       break;
     }
     case 'DIV': {
@@ -203,11 +208,12 @@ function execute() {
 
       if (rtValue === 0) {
         console.error("Division by zero attempted")
+        alert("Division by zero attempted ignoring instruction")
         mipsInst.result = 0
         mfhi = 0
       } else {
-        mipsInst.result = Math.floor(rsValue / rtValue)
-        mfhi = rsValue % rtValue
+        mipsInst.result = (Math.floor(rsValue / rtValue)) | 0
+        mfhi = (rsValue % rtValue) | 0
       }
       break
     }
@@ -219,11 +225,12 @@ function execute() {
 
       if (rtValue === 0) {
         console.error("Division by zero attempted")
+        alert("Division by zero attempted ignoring instruction")
         mipsInst.result = 0
         mfhi = 0
       } else {
-        mipsInst.result = Math.floor(rsValue / rtValue)
-        mfhi = rsValue % rtValue
+        mipsInst.result = (((Math.floor(rsValue / rtValue)) | 0) >>> 0);
+        mfhi = ((rsValue % rtValue) | 0) >>> 0;
       }
       break
     }
@@ -290,7 +297,8 @@ function execute() {
       const rdValue = memoryStore.readRegister(mipsInst.rd as number)
       const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
       if (rsValue === rdValue) {
-        pc = hexToDecimal(mipsInst.rt as string) - 1
+        const target = hexToDecimal(mipsInst.rt as string)
+        pc = signExtend16To32(target) - 1
       }
       break
     }
@@ -299,7 +307,8 @@ function execute() {
       const rdValue = memoryStore.readRegister(mipsInst.rd as number)
       const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
       if (rsValue !== rdValue) {
-        pc = hexToDecimal(mipsInst.rt as string) - 1
+        const target = hexToDecimal(mipsInst.rt as string)
+        pc = signExtend16To32(target) - 1
       }
       break
     }
@@ -312,7 +321,7 @@ function execute() {
         const regNum = parseInt(regStr)
 
         const baseAddress = memoryStore.readRegister(regNum)
-        mipsInst.rt = baseAddress + offset
+        mipsInst.rt = baseAddress + signExtend16To32(offset)
       }
       break
     }
@@ -326,13 +335,13 @@ function execute() {
 
         const baseAddress = memoryStore.readRegister(regNum)
         mipsInst.result = memoryStore.readRegister(mipsInst.rd as number)
-        mipsInst.rt = baseAddress + offset
+        mipsInst.rt = baseAddress + signExtend16To32(offset)
       }
       break
     }
     case 'LI': {
       const immediateValue = typeof mipsInst.rs === 'string' ? hexToDecimal(mipsInst.rs) : mipsInst.rs
-      mipsInst.result = immediateValue
+      mipsInst.result = signExtend16To32(immediateValue)
       break
     }
     case 'LUI': {
@@ -349,7 +358,6 @@ function execute() {
 
 function decode() {
   const memoryStore = useMemoryStore()
-
   const mipsInst = fetchStage
 
   if (mipsInst.raw === 'NOP') {
@@ -373,6 +381,17 @@ function decode() {
     if (registerMatch) {
       const regNum = parseInt(registerMatch?.[1] || '0')
       return regNum
+    } else if (!Number.isNaN(parseInt(part,16))) {
+      if ((part.length > 4 && !part.includes('(')) || part.split('(')[0]!.length > 4) {
+        const original = part
+        const part1 = part.slice(0,4)
+        const part2 = part.slice(4)
+        const warningMessage = `Warning: Immediate value '${original}' exceeds 16 bits. Truncated to '${part1}'`
+        part = part1 + part2
+        console.log('immediate value:', part)
+        alert(warningMessage)
+      }
+      console.log('immediate value:', part)
     }
     return part
   }
@@ -381,6 +400,7 @@ function decode() {
     mipsInst.rd = parseRegOrString(parts[1])
     mipsInst.rs = parseRegOrString(parts[2])
     mipsInst.rt = parseRegOrString(parts[3])
+    console.log(typeof mipsInst.rt)
 
     if (typeof mipsInst.rs === 'number') {
       mipsInst.rs = memoryStore.readRegister(mipsInst.rs)
@@ -437,4 +457,13 @@ function fetch(instructionObj: { address: string; instruction: string }) {
   currentInstructionLine = parseInt(address, 16) || 0;
 
   fetchStage = mipsInst
+}
+
+
+function signExtend16To32(value: number): number {
+  if (value & 0x8000) {
+    return value | 0xFFFF0000;
+  } else {
+    return value;
+  }
 }

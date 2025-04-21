@@ -17,20 +17,31 @@
                 <input type="text" :value="register.value" disabled class="zero-register" />
               </template>
               <template v-else>
-                <input type="text" v-model="register.value" />
+                <input type="text"
+                    v-model="register.value"
+                    @input="cleanHexInput($event, register)"
+                    @blur="formatRegisterHex(register)"
+                    class="hex-input"
+                  />
               </template>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-    <div class="data-container">
+        <div class="data-container">
       <table>
         <tbody>
-          <tr v-for="memory in store.memoryArray" :key="memory.address">
+          <tr v-for="memory in memoryDisplay" :key="memory.address">
             <td>{{ memory.address }}</td>
             <td>
-              <input type="text" v-model="memory.value" />
+              <input type="text"
+                v-model="memory.value"
+                @input="cleanHexInput($event, memory)"
+                @blur="formatMemoryHex(memory)"
+                @change="updateMemoryValue(memory)"
+                class="hex-input"
+              />
             </td>
           </tr>
         </tbody>
@@ -40,7 +51,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue'
+import { defineComponent, ref, onMounted, computed } from 'vue'
 import { useMemoryStore } from 'src/stores/memoryStore'
 
 export default defineComponent({
@@ -49,9 +60,51 @@ export default defineComponent({
     const store = useMemoryStore()
     const fileInput = ref<HTMLInputElement | null>(null)
 
+    const memoryDisplay = computed(() => {
+      return store.getMemoryDisplay(0)
+    })
+
     onMounted(() => {
       store.initialize()
     })
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cleanHexInput = (event: Event, item: any) => {
+      const input = event.target as HTMLInputElement
+      const cleaned = input.value.replace(/[^a-fA-F0-9\s]+/g, '').toUpperCase()
+      if (input.value !== cleaned) {
+        input.value = cleaned
+        item.value = cleaned
+      }
+    }
+
+    const formatRegisterHex = (register: { value: string }) => {
+      let value = register.value.replace(/\s/g, '')
+      value = value.padStart(8, '0')
+
+      if (value.length > 8) {
+        value = value.substring(value.length - 8)
+      }
+      register.value = `${value.substring(0, 4)} ${value.substring(4)}`
+    }
+
+    const formatMemoryHex = (memory: { value: string }) => {
+      let value = memory.value.replace(/\s/g, '')
+      value = value.padStart(8, '0')
+      if (value.length > 8) {
+        value = value.substring(value.length - 8)
+      }
+      memory.value = `${value.substring(0, 4)} ${value.substring(4)}`
+    }
+
+
+    const updateMemoryValue = (memory: { address: string, value: string }) => {
+      const addressInDecimal = parseInt(memory.address, 16)
+
+      const valueAsNumber = parseInt(memory.value.replace(/\s/g, ''), 16)
+
+      store.writeMemory(addressInDecimal, valueAsNumber)
+    }
 
     const saveToFile = () => {
       const content = store.registers
@@ -102,11 +155,16 @@ export default defineComponent({
     return {
       store,
       fileInput,
+      memoryDisplay,
+      updateMemoryValue,
       saveToFile,
       uploadFile,
       triggerFileInput,
       resetRegisters,
       refreshToLastUploadedState,
+      cleanHexInput,
+      formatRegisterHex,
+      formatMemoryHex,
     }
   },
 })

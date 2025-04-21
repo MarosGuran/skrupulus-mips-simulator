@@ -59,7 +59,7 @@
 import { defineComponent, onMounted, ref } from 'vue'
 import { useCodeStore } from 'src/stores/codeStore'
 import { usePipelineStore } from 'src/stores/pipelineStore'
-import { debugMipsPipeline, runMipsPipeline } from 'src/utils/mips'
+import { debugMipsPipeline, runMipsPipeline, resetMipsPipeline } from 'src/utils/mips'
 import CodeMirror from 'codemirror'
 import 'codemirror/lib/codemirror.css'
 import 'codemirror/theme/base16-light.css'
@@ -97,7 +97,7 @@ export default defineComponent({
         name: 'ADDI',
         brief: 'Add Immediate',
         syntax: 'ADDI $rt, $rs, immediate',
-        description: 'Adds the value in register $rs with the immediate value and stores the result in register $rt.',
+        description: 'Adds the value in register $rs with the immediate value and stores the result in register $rt. Immediate values are 16-bit integers.',
         example: 'ADDI $1, $2, 100  # $1 = $2 + 100'
       },
       {
@@ -111,7 +111,7 @@ export default defineComponent({
         name: 'SUBI',
         brief: 'Subtract Immediate',
         syntax: 'SUBI $rt, $rs, immediate',
-        description: 'Subtracts the immediate value from the value in register $rs and stores the result in register $rt.',
+        description: 'Subtracts the immediate value from the value in register $rs and stores the result in register $rt. Immediate values are 16-bit integers.',
         example: 'SUBI $1, $2, 100  # $1 = $2 - 100'
       },
       {
@@ -174,7 +174,7 @@ export default defineComponent({
         name: 'ANDI',
         brief: 'Bitwise AND Immediate',
         syntax: 'ANDI $rt, $rs, immediate',
-        description: 'Performs a bitwise AND operation on the value in register $rs and the immediate value and stores the result in register $rt.',
+        description: 'Performs a bitwise AND operation on the value in register $rs and the immediate value and stores the result in register $rt. Immediate values are 16-bit integers.',
         example: 'ANDI $1, $2, FF  # $1 = $2 & FF'
       },
       {
@@ -188,7 +188,7 @@ export default defineComponent({
         name: 'ORI',
         brief: 'Bitwise OR Immediate',
         syntax: 'ORI $rt, $rs, immediate',
-        description: 'Performs a bitwise OR operation on the value in register $rs and the immediate value and stores the result in register $rt.',
+        description: 'Performs a bitwise OR operation on the value in register $rs and the immediate value and stores the result in register $rt. Immediate values are 16-bit integers.',
         example: 'ORI $1, $2, 0xFF  # $1 = $2 | 0xFF'
       },
       {
@@ -209,7 +209,7 @@ export default defineComponent({
         name: 'XORI',
         brief: 'Bitwise XOR Immediate',
         syntax: 'XORI $rt, $rs, immediate',
-        description: 'Performs a bitwise XOR operation on the value in register $rs and the immediate value and stores the result in register $rt.',
+        description: 'Performs a bitwise XOR operation on the value in register $rs and the immediate value and stores the result in register $rt. Immediate values are 16-bit integers.',
         example: 'XORI $1, $2, 0xFF  # $1 = $2 ^ 0xFF'
       },
       {
@@ -244,14 +244,14 @@ export default defineComponent({
         name: 'LI',
         brief: 'Load Immediate',
         syntax: 'LI $rd, immediate',
-        description: 'Loads the immediate value into register $rd.',
+        description: 'Loads the immediate value into register $rd. Immediate values are 16-bit integers.',
         example: 'LI $1, 100  # $1 = 100'
       },
       {
         name: 'LUI',
         brief: 'Load Upper Immediate',
         syntax: 'LUI $rt, immediate',
-        description: 'Loads the immediate value into the upper half of register $rt.',
+        description: 'Loads the immediate value into the upper half of register $rt. Immediate values are 16-bit integers.',
         example: 'LUI $1, FFFF  # $1 = FFFF 0000'
       },
     ])
@@ -306,6 +306,7 @@ export default defineComponent({
     const stop = () => {
       console.log('Stop button clicked')
       pipelineStore.stopExecution()
+      resetMipsPipeline()
       if (currentHighlightedLine !== null) {
         removeHighlight(currentHighlightedLine)
       }
