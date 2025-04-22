@@ -12,6 +12,7 @@ export const useMemoryStore = defineStore('memoryStore', {
     memory: "0".repeat(1024 * 8),
 
     lastUploadedState: [] as Register[],
+    lastUploadedMemory: "",
   }),
   actions: {
     initialize() {
@@ -23,13 +24,20 @@ export const useMemoryStore = defineStore('memoryStore', {
       this.memory = "0".repeat(1024 * 8)
 
       this.saveCurrentStateAsLastUploaded()
+      this.saveCurrentStateAsLastUploadedMemory()
     },
+
     resetRegisters() {
       this.registers = Array.from({ length: 32 }, (_, i) => ({
         name: `$${i}`,
         value: '0000 0000',
       }))
     },
+
+    resetMemory(): void {
+      this.memory = "0".repeat(1024 * 8);
+    },
+
     refreshToLastUploadedState() {
       this.registers = this.lastUploadedState.map(reg => ({
         name: reg.name,
@@ -37,6 +45,15 @@ export const useMemoryStore = defineStore('memoryStore', {
       }))
       this.registers[0]!.value = '0000 0000'
     },
+
+    refreshToLastUploadedStateMemory(): void {
+      if (this.lastUploadedMemory) {
+        this.memory = this.lastUploadedMemory;
+      } else {
+        console.warn('No previously uploaded memory state available');
+      }
+    },
+
     saveCurrentStateAsLastUploaded() {
       this.lastUploadedState = this.registers.map(reg => ({
         name: reg.name,
@@ -44,6 +61,11 @@ export const useMemoryStore = defineStore('memoryStore', {
       }))
       this.registers[0]!.value = '0000 0000'
     },
+
+    saveCurrentStateAsLastUploadedMemory(): void {
+      this.lastUploadedMemory = this.memory;
+    },
+
     readRegister(registerIndex: number): number {
       if (this.registers.length === 0) {
         this.resetRegisters()
@@ -62,6 +84,7 @@ export const useMemoryStore = defineStore('memoryStore', {
 
       return parseInt(register.value.replace(/\s/g, ''), 16) || 0
     },
+
     writeRegister(registerIndex: number, value: number): void {
       if (registerIndex === 0) {
         return
@@ -84,6 +107,7 @@ export const useMemoryStore = defineStore('memoryStore', {
       const hexValue = (value >>> 0).toString(16).padStart(8, '0').toUpperCase()
       register.value = `${hexValue.substring(0, 4)} ${hexValue.substring(4)}`
     },
+
     readMemory(address: number): number | undefined {
       const byteAddress = address;
 
@@ -155,6 +179,7 @@ export const useMemoryStore = defineStore('memoryStore', {
         return upperPart | (lowerPart << (bytesFromFirst * 8));
       }
     },
+
     writeMemory(address: number, value: number): void {
       const byteAddress = address;
       console.log(`Writing ${value.toString(16)} to address ${byteAddress.toString(16).toUpperCase()}`);
@@ -267,6 +292,7 @@ export const useMemoryStore = defineStore('memoryStore', {
         }
       }
     },
+
     getMemoryDisplay(startAddress: number = 0): { address: string, value: string }[] {
       const result = [];
 

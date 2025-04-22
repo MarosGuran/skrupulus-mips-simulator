@@ -29,7 +29,14 @@
         </tbody>
       </table>
     </div>
-        <div class="data-container">
+    <div class="buttons-container memory-buttons">
+      <q-btn icon="refresh" @click="resetMemory"></q-btn>
+      <q-btn icon="refresh save" @click="refreshToLastUploadedStateMemory"></q-btn>
+      <q-btn icon="save" @click="saveMemoryToFile"></q-btn>
+      <q-btn icon="upload" @click="triggerMemoryFileInput"></q-btn>
+      <input type="file" @change="uploadMemoryFile" ref="fileInput" style="display: none;" />
+    </div>
+    <div class="data-container">
       <table>
         <tbody>
           <tr v-for="memory in memoryDisplay" :key="memory.address">
@@ -152,6 +159,80 @@ export default defineComponent({
       store.refreshToLastUploadedState()
     }
 
+    const resetMemory = () => {
+      store.resetMemory()
+    }
+
+    const refreshToLastUploadedStateMemory = () => {
+      store.refreshToLastUploadedStateMemory()
+    }
+
+    const saveMemoryToFile = () => {
+      const hexWords = [];
+      const totalWords = Math.floor(store.memory.length / 32);
+
+      for (let i = 0; i < totalWords; i++) {
+        const address = i * 4;
+        const binaryValue = store.memory.substring(i * 32, (i + 1) * 32);
+        const decimalValue = parseInt(binaryValue, 2);
+        const hexValue = (decimalValue >>> 0).toString(16).padStart(8, '0').toUpperCase();
+
+        if (decimalValue !== 0) {
+          hexWords.push(`${address.toString(16).padStart(8, '0')}: ${hexValue}`);
+        }
+      }
+
+      const content = hexWords.join('\n');
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'memory_hex.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    const uploadMemoryFile = (event: Event) => {
+      const input = event.target as HTMLInputElement;
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target?.result as string;
+          const lines = content.split('\n');
+
+          let newMemory = "0".repeat(1024 * 8);
+
+          lines.forEach(line => {
+            if (line.includes(':')) {
+              const [addrStr, valueStr] = line.split(':').map(s => s.trim());
+              const address = parseInt(addrStr as string, 16);
+              const value = parseInt(valueStr as string, 16);
+
+              const bitPosition = (address & ~0x3) * 8;
+
+              const binaryValue = (value >>> 0).toString(2).padStart(32, '0');
+
+              if (bitPosition + 31 < newMemory.length) {
+                newMemory =
+                  newMemory.substring(0, bitPosition) +
+                  binaryValue +
+                  newMemory.substring(bitPosition + 32);
+              }
+            }
+          });
+
+          store.memory = newMemory;
+          store.saveCurrentStateAsLastUploadedMemory();
+        };
+        reader.readAsText(file);
+      }
+    }
+
+    const triggerMemoryFileInput = () => {
+      fileInput.value?.click()
+    }
+
     return {
       store,
       fileInput,
@@ -165,6 +246,11 @@ export default defineComponent({
       cleanHexInput,
       formatRegisterHex,
       formatMemoryHex,
+      resetMemory,
+      refreshToLastUploadedStateMemory,
+      saveMemoryToFile,
+      uploadMemoryFile,
+      triggerMemoryFileInput,
     }
   },
 })
@@ -179,6 +265,7 @@ export default defineComponent({
 }
 .buttons-container {
   display: flex;
+  height: 5vh;
   gap: 10px;
   margin-bottom: 10px;
 }
@@ -187,8 +274,7 @@ export default defineComponent({
   overflow-y: auto;
 }
 .data-container {
-  margin-top: 1rem;
-  height: calc(40vh - 1rem);
+  height: calc(35vh - 1rem);
   overflow-y: auto;
 }
 table {
@@ -206,6 +292,10 @@ th {
 input {
   width: 100%;
   box-sizing: border-box;
+}
+.memory-buttons {
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 </style>
