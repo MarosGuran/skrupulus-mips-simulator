@@ -12,6 +12,9 @@ export class MipsInstruction {
     public rd: number | string = 0,
     public immediate: number = 0,
     public result: number | undefined = undefined,
+    public memoryAddress: number | undefined = undefined,
+    public memoryValue: number | undefined = undefined,
+    public branchrdvalue: number | undefined = undefined,
   ) {}
 }
 
@@ -127,7 +130,6 @@ function writeBack() {
     memoryStore.writeRegister(mipsInst.rd as number, mipsInst.result as number);
   }
 
-  // console.log('Write Back:', mipsInst)
 }
 
 function memory() {
@@ -135,14 +137,12 @@ function memory() {
 
   switch (mipsInst.name) {
     case 'LW': {
-      console.log('LW', mipsInst)
       const memoryStore = useMemoryStore()
       const value = memoryStore.readMemory(mipsInst.rt as number)
       mipsInst.result = value
       break
     }
     case 'SW': {
-      console.log('SW', mipsInst)
       const memoryStore = useMemoryStore()
       memoryStore.writeMemory(mipsInst.rt as number, mipsInst.result as number)
       break
@@ -164,9 +164,7 @@ function execute() {
     case 'ADD':{
       const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
       const rtValue = typeof mipsInst.rt === 'string' ? parseInt(mipsInst.rt) : mipsInst.rt
-      console.log(`ADD: rsValue=${rsValue.toString(16)}, rtValue=${rtValue.toString(16)}`);
       mipsInst.result = (rsValue + rtValue) | 0
-      console.log(`ADD result: ${mipsInst.result.toString(16)}`);
       break
     }
     case 'ADDI':{
@@ -293,8 +291,7 @@ function execute() {
       break
     }
     case 'BEQ': {
-      const memoryStore = useMemoryStore()
-      const rdValue = memoryStore.readRegister(mipsInst.rd as number)
+      const rdValue = mipsInst.branchrdvalue
       const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
       if (rsValue === rdValue) {
         const target = hexToDecimal(mipsInst.rt as string)
@@ -303,8 +300,7 @@ function execute() {
       break
     }
     case 'BNE': {
-      const memoryStore = useMemoryStore()
-      const rdValue = memoryStore.readRegister(mipsInst.rd as number)
+      const rdValue = mipsInst.branchrdvalue
       const rsValue = typeof mipsInst.rs === 'string' ? parseInt(mipsInst.rs) : mipsInst.rs
       if (rsValue !== rdValue) {
         const target = hexToDecimal(mipsInst.rt as string)
@@ -313,30 +309,12 @@ function execute() {
       break
     }
     case 'LW': {
-      const memoryStore = useMemoryStore()
-      if (typeof mipsInst.rs === 'string' && mipsInst.rs.includes('(')) {
-        const parts = mipsInst.rs.split('(')
-        const offset = hexToDecimal(parts[0] || '0')
-        const regStr = parts[1]?.replace(')', '').replace('$', '') || '0'
-        const regNum = parseInt(regStr)
-
-        const baseAddress = memoryStore.readRegister(regNum)
-        mipsInst.rt = baseAddress + signExtend16To32(offset)
-      }
+      mipsInst.rt = mipsInst.memoryAddress as number
       break
     }
     case 'SW': {
-      const memoryStore = useMemoryStore()
-      if (typeof mipsInst.rs === 'string' && mipsInst.rs.includes('(')) {
-        const parts = mipsInst.rs.split('(')
-        const offset = hexToDecimal(parts[0] || '0')
-        const regStr = parts[1]?.replace(')', '').replace('$', '') || '0'
-        const regNum = parseInt(regStr)
-
-        const baseAddress = memoryStore.readRegister(regNum)
-        mipsInst.result = memoryStore.readRegister(mipsInst.rd as number)
-        mipsInst.rt = baseAddress + signExtend16To32(offset)
-      }
+      mipsInst.result = mipsInst.memoryValue
+      mipsInst.rt = mipsInst.memoryAddress as number
       break
     }
     case 'LI': {
@@ -385,22 +363,19 @@ function decode() {
       if ((part.length > 4 && !part.includes('(')) || part.split('(')[0]!.length > 4) {
         const original = part
         const part1 = part.slice(0,4)
-        const part2 = part.slice(4)
         const warningMessage = `Warning: Immediate value '${original}' exceeds 16 bits. Truncated to '${part1}'`
-        part = part1 + part2
-        console.log('immediate value:', part)
+        part = part1
         alert(warningMessage)
       }
-      console.log('immediate value:', part)
     }
     return part
   }
 
   if (parts.length === 4) {
     mipsInst.rd = parseRegOrString(parts[1])
+    mipsInst.branchrdvalue = memoryStore.readRegister(mipsInst.rd as number)
     mipsInst.rs = parseRegOrString(parts[2])
     mipsInst.rt = parseRegOrString(parts[3])
-    console.log(typeof mipsInst.rt)
 
     if (typeof mipsInst.rs === 'number') {
       mipsInst.rs = memoryStore.readRegister(mipsInst.rs)
@@ -410,6 +385,19 @@ function decode() {
     }
   } else if (parts.length === 3) {
     mipsInst.rd = parseRegOrString(parts[1])
+
+    if (parts[2]?.includes('(')) {
+      const parts2 = parts[2].split('(')
+      const offsetStr = parts2[0] || '0'
+      const offset = offsetStr === '' ? 0 : parseInt(parseRegOrString(offsetStr) as string, 16)
+
+      const regStr = parts2[1]?.replace(')', '').replace('$', '') || '0'
+      const regNum = parseInt(regStr)
+      const baseAddress = memoryStore.readRegister(regNum)
+
+      mipsInst.memoryAddress = baseAddress + signExtend16To32(offset)
+      mipsInst.memoryValue = memoryStore.readRegister(mipsInst.rd as number)
+    } else {
     mipsInst.rs = parseRegOrString(parts[2])
 
     const third = parts[2] || ''
@@ -421,6 +409,7 @@ function decode() {
     } else {
       mipsInst.immediate = parseInt(third) || 0
     }
+  }
   } else if (parts.length === 2) {
     const second = parts[1] || ''
     if (second.startsWith('$')) {
