@@ -131,14 +131,14 @@ export default defineComponent({
       {
         name: 'DIV',
         brief: 'Divide',
-        syntax: 'DIV $rs, $rt',
+        syntax: 'DIV $rd, $rs, $rt',
         description: 'Divides the value in register $rs by the value in register $rt. The quotient is stored in LO and the remainder in HI.',
         example: 'DIV $2, $3  # LO = $2 / $3'
       },
       {
         name: 'DIVU',
         brief: 'Divide Unsigned',
-        syntax: 'DIVU $rs, $rt',
+        syntax: 'DIVU $rd, $rs, $rt',
         description: 'Divides the unsigned value in register $rs by the unsigned value in register $rt. The quotient is stored in LO and the remainder in HI.',
         example: 'DIVU $2, $3  # LO = $2 / $3 (unsigned)'
       },

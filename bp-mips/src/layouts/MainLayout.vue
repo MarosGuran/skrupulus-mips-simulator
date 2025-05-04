@@ -8,6 +8,19 @@
           </q-avatar>
           SKRUPULUS MIPS simulator
         </q-toolbar-title>
+
+        <q-btn
+          flat
+          round
+          icon="picture_as_pdf"
+          color="white"
+          @click="openPdf"
+          class="q-mr-md"
+          :aria-label="'Open Documentation PDF'"
+        >
+          <q-tooltip>Documentation</q-tooltip>
+        </q-btn>
+
         <speedBar />
       </q-toolbar>
     </q-header>
@@ -37,6 +50,13 @@ export default defineComponent({
     visualizationComponent,
     speedBar,
   },
+  methods: {
+    openPdf() {
+      const pdfUrl = '/public/manuálSkrupulusMipsSimulator.pdf';
+
+      window.open(pdfUrl, '_blank');
+    }
+  }
 })
 </script>
 
