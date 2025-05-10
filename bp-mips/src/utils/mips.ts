@@ -1,7 +1,17 @@
+/**
+ * @module mips
+ * @description Core MIPS simulation functionality for the SKRUPULUS MIPS Simulator.
+ * Provides implementation of the five-stage pipeline and instruction execution,
+ * handling parsing, execution and state management for MIPS assembly instructions.
+ */
 import { useCodeStore } from 'src/stores/codeStore'
 import { usePipelineStore } from 'src/stores/pipelineStore'
 import { useMemoryStore } from 'src/stores/memoryStore'
 
+/**
+ * Class representing a MIPS instruction as it flows through the pipeline.
+ * Contains all the information needed to execute an instruction at each stage.
+ */
 export class MipsInstruction {
   constructor(
     public address: string = '',
@@ -18,18 +28,23 @@ export class MipsInstruction {
   ) {}
 }
 
-
+// Pipeline stage registers to hold instructions between stages
 let fetchStage: MipsInstruction = new MipsInstruction()
 let decodeStage: MipsInstruction = new MipsInstruction()
 let executeStage: MipsInstruction = new MipsInstruction()
 let memoryStage: MipsInstruction = new MipsInstruction()
 export let currentInstructionLine = -1;
 
+// Special register for DIV/DIVU remainder
 let mfhi: number = 0
 
-
+// Program counter
 let pc = 0
 
+/**
+ * Resets the MIPS pipeline to its initial state.
+ * Clears all pipeline stage registers and resets instruction tracking.
+ */
 export function resetMipsPipeline() {
   const pipelineStore = usePipelineStore()
   pipelineStore.resetStages()
@@ -44,15 +59,24 @@ export function resetMipsPipeline() {
   pc = 0
 }
 
+/**
+ * Resets the program counter to zero.
+ * Used when restarting program execution.
+ */
 export function resetMipsProgramCounter() {
   pc = 0
 }
 
+/**
+ * Executes a single cycle of the MIPS pipeline in debug mode.
+ * Advances each instruction through one stage of the pipeline.
+ * @returns The line number of the current instruction for UI highlighting, or -1 if no valid instruction
+ */
 export function debugMipsPipeline() {
   const codeStore = useCodeStore()
   const pipelineStore = usePipelineStore()
 
-
+  // Check if program has completed or safety limit reached
   if(pc >= codeStore.codeArray.length || pc > 2000000) {
     pipelineStore.stopExecution()
   } else {
@@ -77,25 +101,33 @@ export function debugMipsPipeline() {
   return -1;
 }
 
-
+/**
+ * Executes the complete MIPS program in continuous mode.
+ * Runs the pipeline until program completion or manual stop.
+ */
 export async function runMipsPipeline() {
   const codeStore = useCodeStore()
   const pipelineStore = usePipelineStore()
   resetMipsPipeline()
   pipelineStore.startExecution()
 
-
+  /**
+   * Creates a delay between pipeline cycles based on execution speed.
+   * @param t - Delay time in milliseconds
+   */
   function delay(t: number) {
     return new Promise( resolve => setTimeout(resolve, t) );
   }
 
   while (pipelineStore.isRunning) {
+    // Check if program has completed or safety limit reached
     if(pc >= codeStore.codeArray.length || pc > 2000000) {
       pipelineStore.stopExecution()
       break
     }
     const instruction = codeStore.codeArray[pc]
 
+    // Execute pipeline stages in reverse order to prevent data overwrites
     writeBack()
 
     memory()
@@ -109,15 +141,21 @@ export async function runMipsPipeline() {
     }
     pc++
 
+    // Delay execution to make simulation visible at configurable speed
     await delay(pipelineStore.executionSpeed);
   }
 }
 
+/**
+ * Implements the Write Back stage of the pipeline.
+ * Writes computation results from the Memory stage to registers.
+ */
 function writeBack() {
   const memoryStore = useMemoryStore()
 
   const mipsInst = memoryStage
 
+  // List of instructions that write results to a register
   const writeBackInstructions = [
     'ADD', 'ADDI', 'SUB', 'SUBI', 'MUL', 'MULU', 'DIV', 'DIVU',
     'AND', 'ANDI', 'OR', 'ORI', 'XOR', 'XORI', 'NOR',
@@ -126,12 +164,17 @@ function writeBack() {
     'LW','LI','LUI',
   ];
 
+  // Write result to destination register if instruction needs write-back
   if (writeBackInstructions.includes(mipsInst.name)) {
     memoryStore.writeRegister(mipsInst.rd as number, mipsInst.result as number);
   }
 
 }
 
+/**
+ * Implements the Memory stage of the pipeline.
+ * Performs memory load and store operations.
+ */
 function memory() {
   const mipsInst = executeStage
 
@@ -149,13 +192,22 @@ function memory() {
     }
   }
 
-
+  // Pass instruction to memory stage register
   memoryStage = mipsInst
 }
 
+/**
+ * Implements the Execute stage of the pipeline.
+ * Performs the actual computation for each instruction type.
+ */
 function execute() {
   const mipsInst = decodeStage
 
+  /**
+   * Converts a hexadecimal string to a decimal number.
+   * @param hex - Hexadecimal string to convert
+   * @returns Decimal number equivalent
+   */
   const hexToDecimal = (hex: string): number => {
     return parseInt(hex, 16)
   }
@@ -329,29 +381,39 @@ function execute() {
     }
   }
 
-
-
+  // Pass instruction to execute stage register
   executeStage = mipsInst
 }
 
+/**
+ * Implements the Decode stage of the pipeline.
+ * Extracts operands and prepares instruction for execution.
+ */
 function decode() {
   const memoryStore = useMemoryStore()
   const mipsInst = fetchStage
 
+  // Skip processing for NOP instructions
   if (mipsInst.raw === 'NOP') {
     decodeStage = mipsInst
     return
   }
 
+  // Split instruction into tokens, removing commas and normalizing whitespace
   const parts = mipsInst.raw
     .replace(/,/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
     .split(' ')
 
+  // Extract instruction name (opcode)
   mipsInst.name = parts[0] || ''
 
-
+  /**
+   * Parse a token as either a register number or immediate value.
+   * @param part - String token to parse
+   * @returns Register number or immediate value
+   */
   const parseRegOrString = (part: string | undefined): number | string => {
     if (!part) return 0
 
@@ -419,9 +481,15 @@ function decode() {
     }
   }
 
+  // Pass instruction to decode stage register
   decodeStage = mipsInst
 }
 
+/**
+ * Implements the Fetch stage of the pipeline.
+ * Retrieves the next instruction from memory and initializes its processing.
+ * @param instructionObj - Instruction object from code store
+ */
 function fetch(instructionObj: { address: string; instruction: string }) {
   const pipelineStore = usePipelineStore()
 
@@ -435,20 +503,29 @@ function fetch(instructionObj: { address: string; instruction: string }) {
     opcode = 'NOP'
   }
 
+  // Create new instruction object
   const mipsInst = new MipsInstruction(
     address,
     instruction,
     opcode,
   )
 
+  // Update pipeline visualization and tracking
   pipelineStore.pushInstruction(mipsInst.raw)
 
+  // Update current line for UI highlighting
   currentInstructionLine = parseInt(address, 16) || 0;
 
+  // Pass instruction to fetch stage register
   fetchStage = mipsInst
 }
 
-
+/**
+ * Sign-extends a 16-bit value to 32 bits.
+ * Used for immediate values in MIPS instructions.
+ * @param value - 16-bit value to sign extend
+ * @returns 32-bit sign-extended value
+ */
 function signExtend16To32(value: number): number {
   if (value & 0x8000) {
     return value | 0xFFFF0000;

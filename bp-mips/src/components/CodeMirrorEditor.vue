@@ -1,22 +1,37 @@
 <template>
+  <!-- Main container for the code editor with fixed width -->
   <div class="codemirror" style="width: 350px">
+    <!-- Control buttons for code execution and file operations -->
     <div class="buttons-container">
+      <!-- Single instruction execution button, disabled during pipeline execution -->
       <q-btn icon="play_arrow" @click="playsingle" :disable="pipelineStore.isRunning"></q-btn>
+      <!-- Full program execution button, disabled during pipeline execution -->
       <q-btn icon="fast_forward" @click="playwhole" :disable="pipelineStore.isRunning"></q-btn>
+      <!-- Stop execution button -->
       <q-btn icon="stop" @click="stop"></q-btn>
+      <!-- Save editor content to file button -->
       <q-btn icon="save" @click="saveToFile"></q-btn>
+      <!-- Upload code file button -->
       <q-btn icon="upload" @click="triggerFileInput"></q-btn>
+      <!-- Hidden file input for upload functionality -->
       <input type="file" @change="uploadFile" ref="fileInput" style="display: none;" />
     </div>
+    <!-- CodeMirror editor container element -->
     <textarea id="editorContainer"></textarea>
+    <!-- MIPS instruction reference panel -->
     <div class="instruction-reference" :class="{ 'expanded': isInstructionPanelExpanded }">
+      <!-- Panel header with toggle functionality -->
       <div class="instruction-header" @click="toggleInstructionPanel">
         <span>Instruction list</span>
+        <!-- Dynamic icon based on panel expansion state -->
         <q-icon :name="isInstructionPanelExpanded ? 'keyboard_arrow_down' : 'keyboard_arrow_up'" />
       </div>
 
+      <!-- Panel content area, conditionally rendered when expanded -->
       <div class="instruction-content" v-if="isInstructionPanelExpanded">
+        <!-- Instruction list view (shown when no specific instruction is selected) -->
         <div class="instruction-list" v-if="!selectedInstruction">
+          <!-- Individual instruction item -->
           <div
             v-for="instruction in mipsInstructions"
             :key="instruction.name"
@@ -27,7 +42,9 @@
           </div>
         </div>
 
+        <!-- Instruction detail view (shown when a specific instruction is selected) -->
         <div class="instruction-detail" v-else>
+          <!-- Detail view header with back button and instruction name -->
           <div class="detail-header">
             <q-btn
               dense
@@ -37,14 +54,17 @@
               class="back-button" />
             <h3>{{ selectedInstruction.name }}</h3>
           </div>
+          <!-- Instruction syntax section -->
           <div class="detail-syntax">
             <h4>Syntax:</h4>
             <pre>{{ selectedInstruction.syntax }}</pre>
           </div>
+          <!-- Instruction description section -->
           <div class="detail-description">
             <h4>Description:</h4>
             <p>{{ selectedInstruction.description }}</p>
           </div>
+          <!-- Instruction example section -->
           <div class="detail-example" v-if="selectedInstruction.example">
             <h4>Example:</h4>
             <pre>{{ selectedInstruction.example }}</pre>
@@ -56,6 +76,11 @@
 </template>
 
 <script lang="ts">
+/**
+ * @component CodeMirrorEditor
+ * @description A code editor component for MIPS assembly language.
+ * Provides a CodeMirror-based editor
+ */
 import { defineComponent, onMounted, ref } from 'vue'
 import { useCodeStore } from 'src/stores/codeStore'
 import { usePipelineStore } from 'src/stores/pipelineStore'
@@ -64,6 +89,9 @@ import CodeMirror from 'codemirror'
 import 'codemirror/lib/codemirror.css'
 import 'codemirror/theme/base16-light.css'
 
+/**
+ * Interface defining the structure of MIPS instruction documentation
+ */
 interface MipsInstruction {
   name: string;
   brief: string;
@@ -82,9 +110,15 @@ export default defineComponent({
     const codeStore = useCodeStore()
     const pipelineStore = usePipelineStore()
 
+    // Instruction reference panel state
     const isInstructionPanelExpanded = ref(false)
     const selectedInstruction = ref<MipsInstruction | null>(null)
 
+    /**
+     * Comprehensive list of supported MIPS instructions with documentation.
+     * Each entry includes the instruction name, brief description,
+     * syntax pattern, detailed explanation, and usage examples.
+     */
     const mipsInstructions = ref<MipsInstruction[]>([
       {
         name: 'ADD',
@@ -275,7 +309,10 @@ export default defineComponent({
       codeStore.initialize()
     })
 
-
+    /**
+     * Updates the code store with the current editor content.
+     * Called when editor content changes.
+     */
     const updateCodeStore = () => {
       if (!editor) return
 
@@ -285,6 +322,10 @@ export default defineComponent({
       codeStore.updateCode(lines)
     }
 
+    /**
+     * Executes a single instruction in the MIPS pipeline.
+     * Highlights the current line being executed in the editor.
+     */
     const playsingle = () => {
       updateCodeStore()
       const lineNumber = debugMipsPipeline()
@@ -294,6 +335,10 @@ export default defineComponent({
       }
     }
 
+    /**
+     * Executes the entire MIPS program in the pipeline.
+     * Removes any existing line highlighting before execution.
+     */
     const playwhole = () => {
       updateCodeStore()
       if (currentHighlightedLine !== null) {
@@ -303,6 +348,10 @@ export default defineComponent({
       runMipsPipeline()
     }
 
+    /**
+     * Stops the execution of the MIPS pipeline and resets the state.
+     * Removes any line highlighting in the editor.
+     */
     const stop = () => {
       console.log('Stop button clicked')
       pipelineStore.stopExecution()
@@ -312,6 +361,11 @@ export default defineComponent({
       }
     }
 
+    /**
+     * Highlights a specific line in the editor.
+     * Removes any existing highlights before applying a new one.
+     * @param lineNumber - The line number to highlight (0-based)
+     */
     const highlightLine = (lineNumber: number) => {
       if (editor) {
         if (currentHighlightedLine !== null) {
@@ -325,6 +379,10 @@ export default defineComponent({
       }
     }
 
+    /**
+     * Removes highlighting from a specific line in the editor.
+     * @param lineNumber - The line number to remove highlighting from
+     */
     const removeHighlight = (lineNumber: number) => {
       if (editor) {
         console.log(`Removing highlight from line: ${lineNumber}`)
@@ -335,6 +393,10 @@ export default defineComponent({
       }
     }
 
+    /**
+     * Saves the current editor content to a text file.
+     * Creates a download link for the file and triggers it.
+     */
     const saveToFile = () => {
       const content = editor.getValue()
       updateCodeStore()
@@ -347,6 +409,10 @@ export default defineComponent({
       URL.revokeObjectURL(url)
     }
 
+    /**
+     * Handles file upload events and loads the file content into the editor.
+     * @param event - The file input change event
+     */
     const uploadFile = (event: Event) => {
       const input = event.target as HTMLInputElement
       if (input.files && input.files[0]) {
@@ -362,22 +428,32 @@ export default defineComponent({
       }
     }
 
+    /**
+     * Triggers a click on the hidden file input element.
+     * Used by the upload button to open the file dialog.
+     */
     const triggerFileInput = () => {
       if (fileInput.value) {
         fileInput.value.click()
       }
     }
 
+    /**
+     * Toggles the visibility of the instruction reference panel.
+     * Adjusts the editor height based on panel state.
+     */
     const toggleInstructionPanel = () => {
       isInstructionPanelExpanded.value = !isInstructionPanelExpanded.value;
       selectedInstruction.value = null;
 
+      // Adjust editor height based on panel state
       if (isInstructionPanelExpanded.value) {
         document.documentElement.style.setProperty('--editor-height', 'calc(50vh - 40px)');
       } else {
         document.documentElement.style.setProperty('--editor-height', 'calc(80vh - 40px)');
       }
 
+      // Refresh editor after transition to ensure proper rendering
       setTimeout(() => {
         if (editor) {
           editor.refresh();
@@ -385,6 +461,10 @@ export default defineComponent({
       }, 300);
     }
 
+    /**
+     * Selects a specific instruction to display its detailed documentation.
+     * @param instruction - The MIPS instruction to display
+     */
     const selectInstruction = (instruction: MipsInstruction) => {
       selectedInstruction.value = instruction
     }
@@ -413,6 +493,10 @@ export default defineComponent({
 
 
 <style>
+/**
+ * Global styles for the CodeMirror editor.
+ * Sets dynamic height with smooth transition.
+ */
 .CodeMirror {
   height: var(--editor-height, calc(80vh - 40px)) !important;
   transition: height 0.3s ease;
@@ -420,6 +504,11 @@ export default defineComponent({
 </style>
 
 <style scoped>
+/**
+ * Component-specific styles for the CodeMirrorEditor
+ */
+
+/* Main container layout */
 .codemirror {
   display: flex;
   flex-direction: column;
@@ -428,6 +517,7 @@ export default defineComponent({
   height: 100%;
 }
 
+/* Control buttons layout */
 .buttons-container {
   display: flex;
   justify-content: center;
@@ -435,6 +525,7 @@ export default defineComponent({
   margin-bottom: 10px;
 }
 
+/* Instruction reference panel - base state */
 .instruction-reference {
   position: absolute;
   bottom: 0;
@@ -447,10 +538,12 @@ export default defineComponent({
   background-color:#1976D2;
 }
 
+/* Hover effect for instruction panel */
 .instruction-reference:hover {
   background-color: #1763af;
 }
 
+/* Instruction panel content area */
 .instruction-content {
   position: absolute;
   top: -30vh;
@@ -464,11 +557,13 @@ export default defineComponent({
   visibility: hidden;
 }
 
+/* Expanded state for instruction panel content */
 .instruction-reference.expanded .instruction-content {
   transform: translateY(0);
   visibility: visible;
 }
 
+/* Header for instruction panel */
 .instruction-header {
   display: flex;
   justify-content: space-between;
@@ -479,6 +574,7 @@ export default defineComponent({
   height: 40px;
 }
 
+/* Grid layout for instruction list */
 .instruction-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -486,6 +582,7 @@ export default defineComponent({
   padding: 12px;
 }
 
+/* Individual instruction item styling */
 .instruction-item {
   padding: 8px 12px;
   border: 1px solid #ddd;
@@ -496,40 +593,49 @@ export default defineComponent({
   flex-direction: column;
 }
 
+/* Hover effect for instruction items */
 .instruction-item:hover {
   background-color: #e3f2fd;
 }
 
+/* Instruction name text styling */
 .instruction-name {
   font-weight: bold;
   font-family: monospace;
   color: #ffffff;
 }
 
+/* Hover state for instruction name */
 .instruction-item:hover .instruction-name {
   color: #000000;
 }
 
+/* Instruction syntax text styling */
 .instruction-syntax {
   font-size: 0.8em;
   color: #eeeeee;
 }
+
+/* Hover state for instruction syntax */
 .instruction-item:hover .instruction-syntax {
   color: #818181;
 }
 
+/* Detail view container */
 .instruction-detail {
   padding: 16px;
   height: 100%;
   overflow: auto;
 }
 
+/* Header for instruction detail view */
 .detail-header {
   display: flex;
   align-items: center;
   margin-bottom: 12px;
 }
 
+/* Instruction name heading in detail view */
 .detail-header h3 {
   margin: 0;
   font-family: monospace;
@@ -537,6 +643,7 @@ export default defineComponent({
   font-size: 1.3rem;
 }
 
+/* Section headings in detail view */
 .detail-syntax h4,
 .detail-description h4,
 .detail-example h4 {
@@ -545,11 +652,13 @@ export default defineComponent({
   margin-bottom: 5px;
 }
 
+/* Description text styling */
 .detail-description p {
   margin-top: 0;
   margin-bottom: 10px;
 }
 
+/* Code block styling for syntax and examples */
 .detail-syntax pre,
 .detail-example pre {
   background-color: #f0f0f0;
@@ -561,18 +670,20 @@ export default defineComponent({
   margin: 5px 0;
 }
 
+/* Detail section spacing */
 .detail-syntax,
 .detail-description,
 .detail-example {
   margin-bottom: 10px;
 }
 
+/* Back button styling in detail view */
 .back-button {
   min-width: 0;
   padding: 4px;
 }
 
-
+/* Custom scrollbar for instruction panel content */
 .instruction-content::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -592,6 +703,7 @@ export default defineComponent({
   background: #1763af;
 }
 
+/* Custom scrollbar for instruction detail view */
 .instruction-detail::-webkit-scrollbar {
   width: 10px;
   height: 10px;

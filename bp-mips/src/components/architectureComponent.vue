@@ -1,4 +1,5 @@
 <template>
+  <!-- Main container for the MIPS architecture visualization -->
   <div class="architecture-container">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="95.091 75.685 668.512 325.018" xmlns:bx="https://boxy-svg.com">
       <rect x="110" y="120" width="20" height="250" style="fill: #1976D2; stroke: rgb(0, 0, 0);" rx="4" ry="4"/>
@@ -177,62 +178,95 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { usePipelineStore } from 'src/stores/pipelineStore';
+/**
+ * @component ArchitectureComponent
+ * @description Visual representation of the MIPS processor pipeline architecture.
+ *
+ * This component renders an SVG diagram of the 5-stage MIPS pipeline architecture
+ */
+import { defineComponent } from 'vue'
+import { usePipelineStore } from 'src/stores/pipelineStore'
 
 export default defineComponent({
   name: 'ArchitectureComponent',
   setup() {
-    const pipelineStore = usePipelineStore();
+    // Access the pipeline store to get the active stages and their colors
+    const pipelineStore = usePipelineStore()
 
+    /**
+     * Gets the styling for the Fetch stage based on its active status
+     * @returns {Object} CSS styling object with color and stroke width properties
+     */
     const getFetchStyle = () => {
-      const color = pipelineStore.getStageColor(0);
-      return color ? { color: color, strokeWidth: '2px' } : { color: '#ccc', strokeWidth: '1px' };
-    };
+      const color = pipelineStore.getStageColor(0)
+      return color ? { color: color, strokeWidth: '2px' } : { color: '#ccc', strokeWidth: '1px' }
+    }
 
+    /**
+     * Gets the styling for the Decode stage based on its active status
+     * @returns {Object} CSS styling object with color and stroke width properties
+     */
     const getDecodeStyle = () => {
-      const color = pipelineStore.getStageColor(1);
-      return color ? { color: color, strokeWidth: '2px' } : { color: '#ccc', strokeWidth: '1px' };
-    };
+      const color = pipelineStore.getStageColor(1)
+      return color ? { color: color, strokeWidth: '2px' } : { color: '#ccc', strokeWidth: '1px' }
+    }
 
+    /**
+     * Gets the styling for the Execute stage based on its active status
+     * @returns {Object} CSS styling object with color and stroke width properties
+     */
     const getExecuteStyle = () => {
-      const color = pipelineStore.getStageColor(2);
-      return color ? { color: color, strokeWidth: '2px' } : { color: '#ccc', strokeWidth: '1px' };
-    };
+      const color = pipelineStore.getStageColor(2)
+      return color ? { color: color, strokeWidth: '2px' } : { color: '#ccc', strokeWidth: '1px' }
+    }
 
+    /**
+     * Gets the styling for the Memory stage based on its active status
+     * @returns {Object} CSS styling object with color and stroke width properties
+     */
     const getMemoryStyle = () => {
-      const color = pipelineStore.getStageColor(3);
-      return color ? { color: color, strokeWidth: '2px' } : { color: '#ccc', strokeWidth: '1px' };
-    };
+      const color = pipelineStore.getStageColor(3)
+      return color ? { color: color, strokeWidth: '2px' } : { color: '#ccc', strokeWidth: '1px' }
+    }
 
+    /**
+     * Gets the styling for the Writeback stage based on its active status
+     * @returns {Object} CSS styling object with color and stroke width properties
+     */
     const getWritebackStyle = () => {
-      const color = pipelineStore.getStageColor(4);
-      return color ? { color: color, strokeWidth: '2px' } : { color: '#ccc', strokeWidth: '1px' };
-    };
+      const color = pipelineStore.getStageColor(4)
+      return color ? { color: color, strokeWidth: '2px' } : { color: '#ccc', strokeWidth: '1px' }
+    }
 
     return {
       getFetchStyle,
       getDecodeStyle,
       getExecuteStyle,
       getMemoryStyle,
-      getWritebackStyle
-    };
-  }
-});
+      getWritebackStyle,
+    }
+  },
+})
 </script>
 
 <style scoped>
+/* Container for the SVG architecture diagram with responsive sizing */
 .architecture-container {
   width: 100%;
   height: auto;
   margin-top: 20px;
 }
 
+/* Smooth transition effect when pipeline stages change color */
 g {
   transition: color 0.3s ease;
 }
 
-rect, path, line, polyline {
+/* Style for the connection lines in the pipeline diagram */
+rect,
+path,
+line,
+polyline {
   stroke: none;
   fill: currentColor;
 }

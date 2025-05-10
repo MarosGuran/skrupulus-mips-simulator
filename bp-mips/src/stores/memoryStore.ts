@@ -1,12 +1,28 @@
+/**
+ * @store memoryStore
+ * @description State management for MIPS registers and memory.
+ * Provides functionality for reading, writing, and manipulating registers
+ * and memory locations, as well as saving and restoring system state.
+ */
 import { defineStore } from 'pinia'
 
+/**
+ * Interface defining the structure of a MIPS register.
+ * Each register has a name (e.g., "$0", "$1") and a hexadecimal value.
+ */
 export interface Register {
   name: string
   value: string
 }
 
-
+/**
+ * Store for managing MIPS registers and memory state.
+ * Provides actions for initializing, reading, writing, and manipulating registers and memory.
+ */
 export const useMemoryStore = defineStore('memoryStore', {
+  /**
+   * State containing registers, memory, and backup states.
+   */
   state: () => ({
     registers: [] as Register[],
     memory: "0".repeat(1024 * 8),
@@ -14,7 +30,15 @@ export const useMemoryStore = defineStore('memoryStore', {
     lastUploadedState: [] as Register[],
     lastUploadedMemory: "",
   }),
+
+  /**
+   * Actions for manipulating registers and memory.
+   */
   actions: {
+    /**
+     * Initializes the memory store with default values.
+     * Creates 32 registers with zero values and initializes memory to all zeros.
+     */
     initialize() {
       this.registers = Array.from({ length: 32 }, (_, i) => ({
         name: `$${i}`,
@@ -27,6 +51,9 @@ export const useMemoryStore = defineStore('memoryStore', {
       this.saveCurrentStateAsLastUploadedMemory()
     },
 
+    /**
+     * Resets all registers to their initial zero values.
+     */
     resetRegisters() {
       this.registers = Array.from({ length: 32 }, (_, i) => ({
         name: `$${i}`,
@@ -34,10 +61,17 @@ export const useMemoryStore = defineStore('memoryStore', {
       }))
     },
 
+    /**
+     * Resets memory to all zeros.
+     */
     resetMemory(): void {
       this.memory = "0".repeat(1024 * 8);
     },
 
+    /**
+     * Restores registers to their last uploaded state.
+     * Ensures register $0 remains zero regardless of uploaded state.
+     */
     refreshToLastUploadedState() {
       this.registers = this.lastUploadedState.map(reg => ({
         name: reg.name,
@@ -46,6 +80,10 @@ export const useMemoryStore = defineStore('memoryStore', {
       this.registers[0]!.value = '0000 0000'
     },
 
+    /**
+     * Restores memory to its last uploaded state.
+     * Displays a warning if no previous upload exists.
+     */
     refreshToLastUploadedStateMemory(): void {
       if (this.lastUploadedMemory) {
         this.memory = this.lastUploadedMemory;
@@ -54,6 +92,10 @@ export const useMemoryStore = defineStore('memoryStore', {
       }
     },
 
+    /**
+     * Saves the current register state as the last uploaded state.
+     * Used for creating restore points after file uploads.
+     */
     saveCurrentStateAsLastUploaded() {
       this.lastUploadedState = this.registers.map(reg => ({
         name: reg.name,
@@ -62,10 +104,20 @@ export const useMemoryStore = defineStore('memoryStore', {
       this.registers[0]!.value = '0000 0000'
     },
 
+    /**
+     * Saves the current memory state as the last uploaded state.
+     * Used for creating restore points after file uploads.
+     */
     saveCurrentStateAsLastUploadedMemory(): void {
       this.lastUploadedMemory = this.memory;
     },
 
+    /**
+     * Reads a value from a specific register.
+     * Converts the hexadecimal string value to a number.
+     * @param registerIndex - Index of the register to read (0-31)
+     * @returns The value of the register as a number
+     */
     readRegister(registerIndex: number): number {
       if (this.registers.length === 0) {
         this.resetRegisters()
@@ -85,6 +137,13 @@ export const useMemoryStore = defineStore('memoryStore', {
       return parseInt(register.value.replace(/\s/g, ''), 16) || 0
     },
 
+    /**
+     * Writes a value to a specific register.
+     * Converts the number to a formatted hexadecimal string.
+     * Prevents writing to register $0, which must always remain zero.
+     * @param registerIndex - Index of the register to write (0-31)
+     * @param value - The number value to write to the register
+     */
     writeRegister(registerIndex: number, value: number): void {
       if (registerIndex === 0) {
         return
@@ -108,6 +167,12 @@ export const useMemoryStore = defineStore('memoryStore', {
       register.value = `${hexValue.substring(0, 4)} ${hexValue.substring(4)}`
     },
 
+    /**
+     * Reads a word (4 bytes) from memory at the specified address.
+     * Handles address bounds checking and alignment issues.
+     * @param address - The memory address to read from
+     * @returns The value at the memory address, or undefined if error
+     */
     readMemory(address: number): number | undefined {
       const byteAddress = address;
 
@@ -180,6 +245,12 @@ export const useMemoryStore = defineStore('memoryStore', {
       }
     },
 
+    /**
+     * Writes a word (4 bytes) to memory at the specified address.
+     * Handles address bounds checking, alignment issues, and bit manipulations.
+     * @param address - The memory address to write to
+     * @param value - The value to write to memory
+     */
     writeMemory(address: number, value: number): void {
       const byteAddress = address;
       console.log(`Writing ${value.toString(16)} to address ${byteAddress.toString(16).toUpperCase()}`);
@@ -293,6 +364,12 @@ export const useMemoryStore = defineStore('memoryStore', {
       }
     },
 
+    /**
+     * Generates a display-friendly representation of memory for the UI.
+     * Creates an array of address-value pairs with formatted hexadecimal values.
+     * @param startAddress - The starting memory address to display from
+     * @returns Array of objects with memory addresses and their formatted values
+     */
     getMemoryDisplay(startAddress: number = 0): { address: string, value: string }[] {
       const result = [];
 
