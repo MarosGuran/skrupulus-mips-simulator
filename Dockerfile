@@ -24,6 +24,9 @@ FROM nginx:alpine
 # Install apache2-utils for htpasswd
 RUN apk add --no-cache apache2-utils
 
+# Remove default nginx config to avoid conflicts
+RUN rm -f /etc/nginx/conf.d/default.conf
+
 # Copy nginx configuration
 COPY bp-mips/nginx.conf /etc/nginx/conf.d/default.conf
 
@@ -31,7 +34,7 @@ COPY bp-mips/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/dist/pwa /usr/share/nginx/html
 
 # Create htpasswd file with default credentials
-# Username: fiit, Password: mips2024
+# Username: fiit, Password: mips
 # This should be changed in production by mounting a custom .htpasswd file
 RUN htpasswd -bc /etc/nginx/.htpasswd fiit mips
 

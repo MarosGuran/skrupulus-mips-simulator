@@ -240,17 +240,22 @@ ldap_server {
 
 ## Troubleshooting
 
-### Cannot access the application
+For detailed troubleshooting steps, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+
+### Quick checks
+
+#### Cannot access the application
 - Check if container is running: `docker ps`
 - Check logs: `docker-compose logs`
 - Verify port is not in use: `netstat -tulpn | grep 8080`
 
-### Authentication not working
+#### Authentication not working
 - Verify .htpasswd file exists: `docker exec mips-simulator ls -la /etc/nginx/.htpasswd`
 - Check nginx configuration: `docker exec mips-simulator nginx -t`
 - Verify credentials: `docker exec mips-simulator cat /etc/nginx/.htpasswd`
+- Rebuild container: `docker-compose down && docker-compose up -d --force-recreate --build`
 
-### Health check failing
+#### Health check failing
 - Check if nginx is running: `docker exec mips-simulator ps aux | grep nginx`
 - Test health endpoint: `docker exec mips-simulator wget -O- http://localhost/health`
 
