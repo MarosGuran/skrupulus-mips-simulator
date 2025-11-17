@@ -33,7 +33,7 @@ COPY --from=builder /app/dist/pwa /usr/share/nginx/html
 # Create htpasswd file with default credentials
 # Username: fiit, Password: mips2024
 # This should be changed in production by mounting a custom .htpasswd file
-RUN htpasswd -bc /etc/nginx/.htpasswd fiit mips2024
+RUN htpasswd -bc /etc/nginx/.htpasswd fiit mips
 
 # Expose port 80
 EXPOSE 80
