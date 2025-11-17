@@ -1,0 +1,12 @@
+# HTTP Basic Auth password files
+*.htpasswd
+custom.htpasswd
+.htpasswd
+
+# Docker volumes and data
+docker-data/
+
+# Temporary files
+*.tmp
+*.bak
+*~

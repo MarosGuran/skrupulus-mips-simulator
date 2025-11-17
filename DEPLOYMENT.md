@@ -67,10 +67,20 @@ cd skrupulus-mips-simulator
 
 2. Build and start the container:
 ```bash
+# For development/testing with default credentials:
 docker-compose up -d
+
+# For production with custom configuration:
+# See docker-compose.production.yml for examples
+docker-compose -f docker-compose.production.yml up -d
 ```
 
-The application will be available on port 8080 by default.
+The application will be available on port 8080 by default (or port 80 if using the production configuration).
+
+**Files included:**
+- `docker-compose.yml` - Default development configuration
+- `docker-compose.production.yml` - Production configuration example with custom volume mounts
+- `.htpasswd.example` - Example file showing how to create custom authentication credentials
 
 ### HTTP Basic Authentication
 
@@ -80,20 +90,29 @@ The application is protected with HTTP Basic Authentication:
 
 #### Changing Authentication Credentials
 
-**Option 1: Using Docker volume mount (Recommended for production)**
+**Option 1: Using the provided script (Easiest)**
 
-Create a custom `.htpasswd` file:
+Run the interactive script to create a custom `.htpasswd` file:
 ```bash
-htpasswd -c htpasswd fiit
+./scripts/create-htpasswd.sh custom.htpasswd
+```
+
+The script will guide you through creating the file and provide instructions for use.
+
+**Option 2: Using Docker volume mount (Recommended for production)**
+
+Create a custom `.htpasswd` file manually:
+```bash
+htpasswd -c custom.htpasswd fiit
 # Enter your custom password when prompted
 ```
 
-Mount it in docker-compose.yml:
+Mount it in docker-compose.production.yml:
 ```yaml
 services:
   mips-simulator:
     volumes:
-      - ./htpasswd:/etc/nginx/.htpasswd:ro
+      - ./custom.htpasswd:/etc/nginx/.htpasswd:ro
 ```
 
 **Option 2: Building custom Docker image**
