@@ -21,11 +21,19 @@ RUN quasar build -m pwa
 # Stage 2: Serve with nginx
 FROM nginx:alpine
 
+# Install apache2-utils for htpasswd
+RUN apk add --no-cache apache2-utils
+
 # Copy nginx configuration
 COPY bp-mips/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist/pwa /usr/share/nginx/html
+
+# Create htpasswd file with default credentials
+# Username: fiit, Password: mips2024
+# This should be changed in production by mounting a custom .htpasswd file
+RUN htpasswd -bc /etc/nginx/.htpasswd fiit mips2024
 
 # Expose port 80
 EXPOSE 80

@@ -101,3 +101,7 @@ npm run build:pwa
 ```
 
 For more information, see the [bp-mips README](bp-mips/README.md).
+
+## Production Deployment
+
+For production deployment instructions, including security configuration, authentication setup, and server administration tasks, see [DEPLOYMENT.md](DEPLOYMENT.md).
