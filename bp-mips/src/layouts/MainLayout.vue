@@ -71,7 +71,7 @@ export default defineComponent({
      * Opens the simulator's user manual PDF in a new browser tab.
      */
     openPdf() {
-      const pdfUrl = '/public/manuálSkrupulusMipsSimulator.pdf'
+      const pdfUrl = '/manuálSkrupulusMipsSimulator.pdf'
 
       window.open(pdfUrl, '_blank')
     },
